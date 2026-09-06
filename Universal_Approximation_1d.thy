@@ -1,7 +1,7 @@
 section \<open>Universal Approximation Theorem\<close>
 
 theory Universal_Approximation_1d
-  imports Partition_Facts Sup_Estimates
+  imports Asymptotic_Qualitative_Properties Sup_Estimates
 begin
 
 text \<open>
@@ -36,6 +36,18 @@ qed
 definition bounded_function :: "(real \<Rightarrow> real) \<Rightarrow> bool" where
   "bounded_function f \<longleftrightarrow> bdd_above (range (\<lambda>x. \<bar>f x\<bar>))"
 
+(* Theorem 2.1: uniform nodes, with the paper index shifted by one. *)
+definition unif_part :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real list" where
+  "unif_part a b N =
+     map (\<lambda>k. a + (real k -1 ) * ((b - a) / real N )) [0..<N+2]"
+
+(* For example, unif_part 0 1 4 = [-0.25, 0, 0.25, 0.5, 0.75, 1] :: real list.
+   Index 0 holds the exterior node x\<^sub>-\<^sub>1, so paper index k is list index k+1. *)
+
+(* Auxiliary for equation (2.2): the endpoint list includes the exterior node. *)
+lemma length_unif_part [simp]: "length (unif_part a b N) = N+2"
+  unfolding unif_part_def by simp
+
 (* Equation (2.2): the univariate approximation network. *)
 definition G_network :: "(real \<Rightarrow> real) \<Rightarrow> (real \<Rightarrow> real) \<Rightarrow> real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real" where
   "G_network \<sigma> f a b N w x =
@@ -61,19 +73,15 @@ proof -
   note \<eta>_def = eta_eq
   have N_gt_3: "N > 3" using N_defining_properties by simp
   then have N_pos: "N > 0"
-
     by simp
-
-  (* Bridge to the standalone partition lemmas of Partition_Facts. *)
-  have xs_N_def: "xs N = unif_part a b N"
-    by (simp add: xs_def)
 
 
 
   (* Set the mesh width h. *)
   obtain h where h_def: "h = (b-a)/N"
     by simp
-  note h_pos = Partition_Facts.h_pos[OF a_lt_b N_pos h_def]
+  then have h_pos: "h > 0"
+    using N_defining_properties a_lt_b by force
 
   (* Ensure h < \<delta>/2 so neighbor points are \<delta>-close. *)
   have h_lt_\<delta>_half: "h < \<delta> / 2"
@@ -103,16 +111,44 @@ proof -
     using unif_part_def xs_def by presburger
 
     
-  note xs_els = Partition_Facts.xs_els[OF h_def xs_N_def]
+  then have xs_els: "\<And>k. k \<in> {0..N+1} \<longrightarrow>  xs N ! k = a +  (real k-1) * h"
+    by (metis (no_types, lifting) Suc_1 add_0 add_Suc_right atLeastAtMost_iff diff_zero h_def linorder_not_le not_less_eq_eq nth_map_upt)
 
   (* Endpoints of the extended grid. *)
-  note zeroth_element = Partition_Facts.zeroth_element[OF h_def xs_N_def]
-  note first_element = Partition_Facts.first_element[OF h_def xs_N_def]
-  note last_element = Partition_Facts.last_element[OF N_pos h_def xs_N_def]
+  have zeroth_element: "xs N !0 = a-h"
+    by (simp add: xs_els)                      
+  have first_element: "xs N !1 = a"
+    by (simp add: xs_els)                      
+  have last_element: "xs N !(N+1) = b"
+  proof - 
+    have "xs N !(N+1) = a +  N * h"
+      using xs_els by force
+    then show ?thesis
+      by (simp add: N_pos h_def)
+  qed
 
   (* Algebra on grid differences. *)
-  note difference_of_terms = Partition_Facts.difference_of_terms[OF h_def xs_N_def]
-  note difference_of_adj_terms = Partition_Facts.difference_of_adj_terms[OF h_def xs_N_def]
+  have difference_of_terms: "\<And>j k . j \<in> {1..N+1} \<and>  k \<in> {1..N+1} \<and> j\<le> k \<longrightarrow> xs N ! k - xs N ! j = h*(real k-j)"
+  proof(clarify)
+    fix j k
+    assume j_type: "j \<in> {1..N + 1}"
+    assume k_type: "k \<in> {1..N + 1}"
+    assume j_leq_k: "j \<le> k"
+    have j_th_el: "xs N ! j  = (a +  (real j-1) * h)"
+      using j_type xs_els by auto
+    have k_th_el: "xs N  ! k  = (a +  (real k-1) * h)"
+      using k_type xs_els by auto
+    then show "xs N ! k - xs N ! j = h * (real k - j)"
+      by (smt (verit, del_insts) j_th_el left_diff_distrib' mult.commute)
+  qed
+  then have difference_of_adj_terms: "\<And>k .  k \<in> {1..N+1}  \<longrightarrow> xs N ! k - xs N ! (k-1) = h"
+  proof -
+    fix k :: nat
+    have "k = 1 \<longrightarrow> k \<in> {1..N + 1} \<longrightarrow> xs N ! k - xs N ! (k - 1) = h"
+      using first_element zeroth_element by auto
+    then show "k \<in> {1..N + 1} \<longrightarrow> xs N ! k - xs N ! (k - 1) = h"
+      using difference_of_terms le_diff_conv by fastforce
+  qed
   have adj_terms_lt: "\<And>k .  k \<in> {1..N+1}  \<longrightarrow>  \<bar>xs N ! k - xs N ! (k - 1)\<bar> < \<delta>"
   proof(clarify)
     fix k 
@@ -127,8 +163,10 @@ proof -
   qed
 
 
-  note list_increasing = Partition_Facts.list_increasing[OF a_lt_b N_pos h_def xs_N_def]
-  note els_in_ab = Partition_Facts.els_in_ab[OF a_lt_b N_pos h_def xs_N_def]
+  from difference_of_terms have list_increasing: "\<And>j k . j \<in> {1..N+1} \<and> k \<in> {1..N+1} \<and> j \<le> k \<longrightarrow>  xs N ! j \<le> xs N !k"
+    by (smt (verit, ccfv_SIG) h_pos of_nat_eq_iff of_nat_mono zero_less_mult_iff)
+  have els_in_ab: "\<And>k. k \<in> {1..N+1} \<longrightarrow> xs N ! k \<in> {a..b}"
+    using first_element last_element list_increasing by force
 
 
 
@@ -162,8 +200,74 @@ proof -
      In our notation: ...................................................., such that x \<in> [ xs N!{i} ,xs_(i+1)]*)
     (* Find the unique i so that x lies in [x_i, x_{i+1}]. *)
   
-      have "\<exists>i. i \<in> {1..N} \<and> x \<in> {xs N ! i .. xs N ! (i+1)}"
-        by (rule exists_containing_interval[OF a_lt_b N_pos h_def xs_N_def x_in_ab])
+    have "\<exists>i. i \<in> {1..N} \<and> x \<in> {xs N ! i .. xs N ! (i+1)}"
+    proof -
+      have intervals_cover: "{xs N ! 1 .. xs N ! (N+1)} \<subseteq> (\<Union>i\<in>{1..N}. {xs N! i .. xs N! (i+1)})"
+      proof
+        fix x::real
+        assume x_def: "x \<in> {xs N! 1 .. xs N ! (N+1)}"
+        then have lower_bound: "x \<ge> xs N ! 1" 
+          by simp
+        from x_def have upper_bound: "x \<le> xs N! (N+1)"
+          by simp
+
+
+
+
+        obtain j where j_def: "j = (GREATEST j. xs N ! j \<le> x \<and>  j \<in> {1..N+1})"
+          by blast
+        have nonempty_definition: "{j \<in> {1..N+1}. xs N ! j \<le> x} \<noteq> {}"
+          using lower_bound by force
+        then have j_exists:"\<exists>j \<in> {1..N+1}. xs N ! j \<le> x"
+          by blast
+        have j_greatest: "xs N ! j \<le> x \<and> j \<in> {1..N+1}"          
+        proof (unfold j_def, rule GreatestI_ex_nat[of "\<lambda>j. xs N ! j \<le> x \<and> j \<in> {1..N+1}" "N+1"])
+          show "\<exists>k. xs N ! k \<le> x \<and> k \<in> {1..N+1}"
+            using j_exists by blast
+          show "\<And>y. xs N ! y \<le> x \<and> y \<in> {1..N+1} \<Longrightarrow> y \<le> N + 1"
+            by simp
+        qed
+        have j_bounds: "j \<in> {1..N+1}"
+          using j_greatest by blast
+        have xs_j_leq_x: "xs N ! j \<le> x"
+          by (simp only: j_greatest)
+
+        show "x \<in> (\<Union>i \<in> {1..N}. {xs N ! i..xs N ! (i + 1)})"
+        proof(cases "j = N+1")
+          show "j = N + 1 \<Longrightarrow> x \<in> (\<Union>i \<in> {1..N}. {xs N ! i..xs N ! (i + 1)})"
+            using N_pos els_in_ab last_element upper_bound xs_j_leq_x by force
+        next
+          assume j_not_SucN:"j \<noteq> N + 1"
+          then have j_type: "j \<in> {1..N}"
+            by (metis Suc_eq_plus1 atLeastAtMost_iff j_bounds le_Suc_eq)
+          then have Suc_j_type: "j + 1 \<in> {2..N+1}"
+            by (metis Suc_1 Suc_eq_plus1 atLeastAtMost_iff diff_Suc_Suc diff_is_0_eq)
+          have equal_sets: "{j \<in> {1..N+1}. xs N ! j \<le> x} = {j \<in> {1..N}. xs N ! j \<le> x}"
+          proof 
+            show "{j \<in> {1..N}. xs N ! j \<le> x} \<subseteq> {j \<in> {1..N + 1}. xs N ! j \<le> x}"
+              by auto
+            show "{j \<in> {1..N + 1}. xs N ! j \<le> x} \<subseteq> {j \<in> {1..N}. xs N ! j \<le> x}"
+              by (safe, metis (no_types, lifting) Greatest_equality Suc_eq_plus1 j_not_SucN atLeastAtMost_iff j_def le_Suc_eq)
+          qed
+
+          have xs_j1_not_le_x: "\<not> (xs N ! (j+1) \<le> x)"
+          proof(rule ccontr)
+            assume BWOC: "\<not> \<not> xs N ! (j + 1) \<le> x"
+            then have Suc_j_type':"j+1 \<in> {1..N}"   (*This is not a mistake, by using the previous line BWOC we can conclude this, but in fact j+1 could be N+1.*)
+              using Suc_j_type equal_sets add.commute by auto         
+            from j_def show False
+                using equal_sets  
+                by (smt (verit, del_insts) BWOC Greatest_le_nat One_nat_def Suc_eq_plus1 Suc_j_type' Suc_n_not_le_n  atLeastAtMost_iff mem_Collect_eq)
+          qed
+          then have "x \<in> {xs N ! j .. xs N ! (j+1)}"
+            by (simp add: xs_j_leq_x)
+          then show ?thesis
+            using j_type by blast
+        qed
+      qed
+      then show ?thesis
+        using first_element last_element x_in_ab by fastforce
+    qed               
     then obtain i where i_def: "i \<in> {1..N} \<and> x \<in> {xs N ! i .. xs N ! (i+1)}"
       by blast
     then have i_ge_1: "i \<ge> 1"

@@ -13,6 +13,61 @@ straight out of `Sigmoid_Universal_Approximation.db`, decompresses them, maps ea
 Isabelle symbol offset back to a line number, and attributes it to the enclosing
 declaration. No instrumented rebuild is needed — an ordinary build refreshes the data.
 
+## Results (2026-09-05, after the first pass)
+
+| | baseline | now |
+|---|---:|---:|
+| wall clock | 1:20 | **0:42** |
+| CPU | 3:25 (205 s) | **2:20 (140 s)** |
+| recorded command time (> 0.1 s) | 187.2 s | **69.4 s** |
+
+plus the audit, now a separate 3 s target rather than part of every build.
+
+| target | status |
+|---|---|
+| T5, the leftover `value` | **done** — removed, its content kept as a comment |
+| T1.1, `Proof_Audit` to its own session | **done and validated** — see below |
+| T3, the two bare `simp` calls | **done** — 3.67 s to 0.71 s, 3.27 s to 0.85 s |
+| T4, the duplicated forward-difference bound | **withdrawn** — T3 subsumed it |
+| T1.2, splitting the 1283-line monolith | open |
+| T2, the `smt` cluster | partially done; estimate revised |
+
+**T1.1 needed care.** Isabelle forbids two sessions sharing a directory, so
+`Proof_Audit.thy` moved to `audit/` with its own ROOT. That put the audit's own check
+at risk: it scanned *its own* directory for local theory files, which after the move
+would have found only itself, making the import-closure check vacuous. It now resolves
+the entry directory from the capstone theory instead. Both checks were then verified by
+deliberately breaking them -- a planted `sorry` was caught (`oracles: skip_proof`), and a
+planted unimported theory was caught (`local theory files outside the import closure`).
+A diagnostic run confirms it still examines 508 project facts across 27/27 local
+theories. Everyday builds use `Sigmoid_Universal_Approximation`; run
+`Sigmoid_Universal_Approximation_Audit` (with `-d audit`) before any commit that changes
+a proof, and before release.
+
+**T3 was worse than diagnosed.** Both sites did `unfolding C1_def M1_def` then `by simp`
+on a goal *literally identical* to the instantiated `forward_diff_one_J1_sum_bound` --
+the lemma's own `defines` already inline the same `Sup` terms the caller unfolds. `simp`
+was running the full simpset over large sum expressions to conclude `A = A`. Both are
+now `using ... .`, with no search at all.
+
+**T4 is withdrawn on the evidence.** `forward_diff_one_J1_eta_bound` and
+`forward_diff_one_J1_rate_bound` cost 6.94 s combined at baseline; after T3 they cost
+1.56 s, so merging them would now recover well under a second. The duplication remains a
+maintainability problem -- the same proof in two files -- but the performance argument
+for restructuring working proofs has gone.
+
+**T2's estimate needs revising.** 59 `smt` calls remain, costing 9.84 s, down from 18.9 s.
+But the profile has flattened: `simp` (14.8 s over 61 calls) and `auto` (12.4 s over 57)
+are each now larger than `smt`, no single command exceeds 1.4 s, and the largest single
+item is theory-import processing, which is not attackable. Individual `smt` removal is
+now worth a few tenths of a second each, against real proof-change risk.
+
+**A secondary effect worth knowing.** Removing `smt` calls also made the audit cheaper:
+its ML block fell from 52.3 s to 27.9 s as `smt` reconstructions left the proof terms it
+traverses. `smt` was costing twice -- once to run, once again in the audit.
+
+The baseline figures below are retained as the measurement this pass was judged against.
+
 ## Where the time goes
 
 | kind | calls | total | share |

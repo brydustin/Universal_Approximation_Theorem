@@ -131,8 +131,16 @@ proof -
       using lower_bound by force
     then have j_exists: "\<exists>j \<in> {1..N+1}. xs ! j \<le> x"
       by blast
-    then have j_bounds: "j \<in> {1..N+1}"
-      by (smt (verit) GreatestI_nat atLeastAtMost_iff j_def)
+    have j_greatest: "xs ! j \<le> x \<and> j \<in> {1..N+1}"
+      unfolding j_def
+    proof (rule GreatestI_ex_nat[of "\<lambda>j. xs ! j \<le> x \<and> j \<in> {1..N+1}" "N+1"])
+      show "\<exists>k. xs ! k \<le> x \<and> k \<in> {1..N+1}"
+        using j_exists by blast
+      show "\<And>y. xs ! y \<le> x \<and> y \<in> {1..N+1} \<Longrightarrow> y \<le> N + 1"
+        by simp
+    qed
+    have j_bounds: "j \<in> {1..N+1}"
+      using j_greatest by blast
     have xs_j_leq_x: "xs ! j \<le> x"
       by (metis (no_types, lifting) GreatestI_ex_nat atLeastAtMost_iff j_def j_exists)
 

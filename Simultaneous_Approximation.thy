@@ -1057,8 +1057,7 @@ proof -
        \<le> real M * ((C1 / 2) * h) + real M * (C1 * h) + real M * ((C1 / 2) * h)
        + (C1 / 2) * h + M1"
     unfolding C1_def M1_def
-    using forward_diff_one_J1_sum_bound[OF a_lt_b N_pos h_def xs_def Ck ab_subset M_le_N M_pos]
-    by simp
+    using forward_diff_one_J1_sum_bound[OF a_lt_b N_pos h_def xs_def Ck ab_subset M_le_N M_pos] .
 
   have term123: "(1 / real N) * (real M * ((C1 / 2) * h) + real M * (C1 * h) + real M * ((C1 / 2) * h))
        < \<eta> / 2 + \<eta> + \<eta> / 2"

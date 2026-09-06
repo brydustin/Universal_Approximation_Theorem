@@ -77,8 +77,7 @@ proof -
        \<le> real M * ((C1 / 2) * h) + real M * (C1 * h) + real M * ((C1 / 2) * h)
        + (C1 / 2) * h + M1"
     unfolding C1_def M1_def
-    using forward_diff_one_J1_sum_bound[OF a_lt_b N_pos h_def xs_def Ck ab_subset M_le_N M_pos]
-    by simp
+    using forward_diff_one_J1_sum_bound[OF a_lt_b N_pos h_def xs_def Ck ab_subset M_le_N M_pos] .
 
   text \<open>\<open>b-a = N h\<close>, so the whole \<open>C\<^sub>1\<close>-part of the bound is a multiple of \<open>C\<^sub>1 h\<close>.\<close>
   have ba: "b - a = real N * h"

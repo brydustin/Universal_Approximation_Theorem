@@ -1,5 +1,5 @@
 theory Proof_Audit
-  imports Sigmoid_Universal_Approximation
+  imports Sigmoid_Universal_Approximation.Sigmoid_Universal_Approximation
 begin
 
 (* Build safeguard: audit stored proofs, not a numbered result in the paper. *)
@@ -8,10 +8,16 @@ ML \<open>
   val audit_base = Thy_Info.get_theory "Real_and_Complex_Analytic.Higher_Differentiability";
   val audit_facts = Global_Theory.dest_thms true [audit_base] audit_thy
     |> map (apsnd (Thm.transfer audit_thy));
-  val audit_dir = Resources.master_directory audit_thy;
+  (* The directory scanned is the ENTRY's, not this theory's. Proof_Audit.thy lives in
+     its own session directory, because Isabelle forbids two sessions sharing one; if
+     this scanned its own directory it would find only itself and the check that every
+     local theory file lies in the import closure would be vacuous. *)
+  val audit_root = Thy_Info.get_theory
+    "Sigmoid_Universal_Approximation.Sigmoid_Universal_Approximation";
+  val audit_dir = Resources.master_directory audit_root;
   fun audit_directory thy = Path.implode (Path.expand (Resources.master_directory thy));
   val audit_names = audit_thy :: Context.ancestors_of audit_thy
-    |> filter (fn thy => audit_directory thy = audit_directory audit_thy)
+    |> filter (fn thy => audit_directory thy = audit_directory audit_root)
     |> map Context.theory_base_name;
   val audit_files = File.read_dir audit_dir
     |> filter (String.isSuffix ".thy")

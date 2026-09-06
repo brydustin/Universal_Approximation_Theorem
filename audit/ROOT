@@ -1,0 +1,29 @@
+chapter AFP
+
+(* The permanent audit, as a separate build target.
+
+   Proof_Audit.thy is not mathematics. Its ML block walks every stored fact of the
+   development calling Thm_Deps.all_oracles, which traverses proof terms transitively,
+   then checks for hidden hypotheses, fixed free term variables and non-definitional
+   axioms. That is worth doing, but it costs a large share of the build and its verdict
+   cannot change unless a theory changes, so charging it to every rebuild is waste.
+
+   The everyday command is therefore
+
+     isabelle build ... Sigmoid_Universal_Approximation
+
+   and the audit is run separately, before any commit that changes a proof and before
+   any release:
+
+     isabelle build ... Sigmoid_Universal_Approximation_Audit
+
+   Proof_Audit.thy deliberately stays in the entry's own directory and is referenced
+   here by relative path. Its check that every local theory file lies in the import
+   closure reads that directory, so keeping the file there is what makes the check
+   cover the whole development; moving it into this one would make that check
+   vacuous. Isabelle does not permit two sessions to share a directory, which is why
+   only this ROOT lives here. *)
+session "Sigmoid_Universal_Approximation_Audit" = "Sigmoid_Universal_Approximation" +
+  options [timeout = 600, document = false, quick_and_dirty = false]
+  theories
+    Proof_Audit

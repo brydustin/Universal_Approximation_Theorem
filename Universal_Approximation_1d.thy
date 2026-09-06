@@ -41,8 +41,8 @@ definition unif_part :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow>
   "unif_part a b N =
      map (\<lambda>k. a + (real k -1 ) * ((b - a) / real N )) [0..<N+2]"
 
-value "unif_part (0::real) 1 4"
-(* Output: [-.25, 0,  0.25, 0.5, 0.75, 1] :: real list *)
+(* For example, unif_part 0 1 4 = [-0.25, 0, 0.25, 0.5, 0.75, 1] :: real list.
+   Index 0 holds the exterior node x\<^sub>-\<^sub>1, so paper index k is list index k+1. *)
 
 (* Auxiliary for equation (2.2): the endpoint list includes the exterior node. *)
 lemma length_unif_part [simp]: "length (unif_part a b N) = N+2"
@@ -215,15 +215,22 @@ proof -
 
 
         obtain j where j_def: "j = (GREATEST j. xs N ! j \<le> x \<and>  j \<in> {1..N+1})"
-          by blast      
+          by blast
         have nonempty_definition: "{j \<in> {1..N+1}. xs N ! j \<le> x} \<noteq> {}"
           using lower_bound by force
         then have j_exists:"\<exists>j \<in> {1..N+1}. xs N ! j \<le> x"
           by blast
-        then have j_bounds: "j \<in> {1..N+1}"
-          by (smt (verit) GreatestI_nat  atLeastAtMost_iff j_def)
+        have j_greatest: "xs N ! j \<le> x \<and> j \<in> {1..N+1}"          
+        proof (unfold j_def, rule GreatestI_ex_nat[of "\<lambda>j. xs N ! j \<le> x \<and> j \<in> {1..N+1}" "N+1"])
+          show "\<exists>k. xs N ! k \<le> x \<and> k \<in> {1..N+1}"
+            using j_exists by blast
+          show "\<And>y. xs N ! y \<le> x \<and> y \<in> {1..N+1} \<Longrightarrow> y \<le> N + 1"
+            by simp
+        qed
+        have j_bounds: "j \<in> {1..N+1}"
+          using j_greatest by blast
         have xs_j_leq_x: "xs N ! j \<le> x"
-          by (metis (no_types, lifting) GreatestI_ex_nat atLeastAtMost_iff j_def j_exists)
+          by (simp only: j_greatest)
 
         show "x \<in> (\<Union>i \<in> {1..N}. {xs N ! i..xs N ! (i + 1)})"
         proof(cases "j = N+1")
@@ -548,7 +555,7 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
                           (\<Sum>k\<in>{i..N+1}.   (f (xs N ! k) - f (xs N ! (k - 1))) * \<sigma> (w * (x - xs N ! k)))  + f (xs N ! 1) * \<sigma> (w * (x - xs N ! 0)) - 
                           (\<Sum>k\<in>{2..i-1}. (f (xs N ! k) - f (xs N ! (k - 1))) ) - f(a) -  (f (xs N ! i) - f (xs N ! (i - 1)))* \<sigma> (w * (x - xs N ! i)) -
                                                                                      (f (xs N ! (i+1)) - f (xs N ! i))* \<sigma> (w * (x - xs N ! (i+1)))\<bar>"
-          by (smt (verit, ccfv_SIG) G_Nf_def sum_mono sum_of_terms)
+          by (smt (verit, best) G_Nf_def sum.cong sum_of_terms)
 
         also have "... = \<bar>((\<Sum>k\<in>{2..i-1}.   (f (xs N ! k) - f (xs N ! (k - 1))) * \<sigma> (w * (x - xs N ! k)))
                          -(\<Sum>k\<in>{2..i-1}.   (f (xs N ! k) - f (xs N ! (k - 1))) ))+
@@ -561,7 +568,7 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
                           (\<Sum>k\<in>{i..N+1}.   (f (xs N ! k) - f (xs N ! (k - 1))) * \<sigma> (w * (x - xs N ! k)))  + f (xs N ! 1) * \<sigma> (w * (x - xs N ! 0))
       - f(a) -  (f (xs N ! (i)) - f (xs N ! (i - 1)))* \<sigma> (w * (x - xs N ! (i))) -
                  (f (xs N ! (i+1)) - f (xs N ! (i)))* \<sigma> (w * (x - xs N ! (i+1)))\<bar>"
-          by (simp add: sum_subtractf)
+          by (simp only: sum_subtractf)
         also have "... = \<bar>(\<Sum>k\<in>{2..i-1}. (f (xs N ! k) - f (xs N ! (k - 1))) * (\<sigma> (w * (x - xs N ! k)) - 1)) +
                   (\<Sum>k\<in>{i..N+1}. (f (xs N ! k) - f (xs N ! (k - 1))) * \<sigma> (w * (x - xs N ! k))) +
                   f (xs N ! 1) * \<sigma> (w * (x - xs N ! 0)) -
@@ -638,7 +645,7 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
             have f3: "\<bar>f (a) * (\<sigma> (w * (x - xs N ! 0)) - 1)\<bar> = \<bar>f (a)\<bar> * \<bar>\<sigma> (w * (x - xs N ! 0)) - 1\<bar>"
               using abs_mult by blast
             then show ?thesis
-              by (smt (verit, best) f1 f2 sum_mono)
+              by (simp only: abs_mult)              
           qed
           finally show ?thesis.
         qed
@@ -752,7 +759,7 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
                  
 
                   show "\<bar>f (xs N ! y) - f (xs N ! (y - 1))\<bar> * \<bar>\<sigma> (w * (x - xs N ! y))\<bar> < \<eta> * (1 / N)"
-                    using f_diff_lt_eta mult_strict_mono sigma_lt_inverseN by fastforce
+                    using abs_mult_less f_diff_lt_eta sigma_lt_inverseN by blast
                 qed
                 also have "... \<le> (\<Sum>k\<in>NonZeroTerms. \<eta> * (1 /  N)) +  (\<Sum>k\<in>ZeroTerms. \<eta> * (1 / N))"
                   using \<eta>_pos by force
@@ -835,8 +842,13 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
                 using y_type by blast
               have lt_minus_h: "x - xs N!y \<ge> h"
                 using x_minus_xk_ge_h_on_Left_Half y_type by force
-              then have bot_sigma_lt_inverseN: "\<bar>\<sigma> (w * (x - xs N ! y)) -1 \<bar>  <  (1 /  N)"
-                by (smt (z3) Suc_eq_plus1 add_2_eq_Suc' atLeastAtMost_iff diff_zero length_map length_upt less_Suc_eq_le w_prop xs_eqs y_suptype)
+              have bot_sigma_lt_inverseN: "\<bar>\<sigma> (w * (x - xs N ! y)) -1 \<bar>  <  (1 /  N)"
+              proof -
+                have "y < length (xs N)"
+                  using y_suptype by (simp add: xs_eqs)
+                then show ?thesis
+                  using w_prop lt_minus_h by blast
+              qed
               then show "\<bar>f (xs N ! y) - f (xs N ! (y - 1))\<bar> * \<bar>\<sigma> (w * (x - xs N ! y)) - 1\<bar> < \<eta> * (1 /  N)"
                 by (smt (verit, del_insts) f_diff_lt_eta mult_strict_mono)
 
@@ -1040,7 +1052,7 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
               
 
                   show "\<bar>f (xs N ! y) - f (xs N ! (y - 1))\<bar> * \<bar>\<sigma> (w * (x - xs N ! y))\<bar> < \<eta> * (1 / N)"
-                    using f_diff_lt_eta mult_strict_mono sigma_lt_inverseN by fastforce
+                     using abs_mult_less f_diff_lt_eta sigma_lt_inverseN by blast
                 qed
                 also have "... \<le> (\<Sum>k\<in>NonZeroTerms. \<eta> * (1 /  N)) +  (\<Sum>k\<in>ZeroTerms. \<eta> * (1 / N))"
                   using \<eta>_pos by force

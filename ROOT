@@ -34,7 +34,6 @@ session "Sigmoid_Universal_Approximation" = "Real_and_Complex_Analytic" +
 (* The top-level theories of the submission: *)
   theories
     Sigmoid_Universal_Approximation
-    Proof_Audit
 
 (* Dependencies on document source files: *)
   document_files

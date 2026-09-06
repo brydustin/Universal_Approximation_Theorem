@@ -1,0 +1,12 @@
+# Isabelle build artifacts
+output/
+
+# jEdit / editor backups
+*.thy~
+*~
+
+# LaTeX intermediates
+*.aux
+*.log
+*.out
+*.toc

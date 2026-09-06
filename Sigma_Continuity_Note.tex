@@ -1,0 +1,187 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\newcommand{\Lp}{L^{p}}
+\newcommand{\isa}[1]{\texttt{#1}}
+
+\title{The $\Lp$ norm and the $\sigma$ hypothesis:\\ what was wrong and what was done}
+\author{Working note, Sigmoid\_Universal\_Approximation}
+\date{5 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This note began as an explanation of one extra hypothesis --- $\sigma$ assumed continuous in
+the $\Lp$ theorems, where Costarelli and Spigler assume only bounded sigmoidal. Investigating
+it turned up a deeper problem in the \emph{definition} of the norm. Both are now fixed, in
+three stages: an integrability guard (\S3), a move to the extended reals (\S4), and the
+weakening of the hypothesis itself (\S5). All four $\Lp$ theorems now assume only
+$\sigma\in\isa{borel\_measurable borel}$, and the Heaviside function witnesses that this is a
+real weakening rather than a restatement.
+\end{abstract}
+
+\section{The original observation}
+
+Costarelli and Spigler state Theorem 3.2 as:
+
+\begin{quote}
+\emph{Let $\sigma$ be a bounded sigmoidal function and let $f\in \Lp[a,b]$, $1\le p<\infty$, be
+fixed. Then, for every $\varepsilon>0$ there exists $N\in\mathbb{N}^{+}$ and a linear
+combination $G_N$ of sigmoidal functions as in (2.1), such that
+$\|G_N-f\|_{\Lp[a,b]}<\varepsilon$.}
+\end{quote}
+
+Our formalisation carried \isa{assumes cont\_sigmoidal: "continuous\_on UNIV \(\sigma\)"},
+which the paper does not. The question was why.
+
+\section{Why: the junk-value collapse}
+
+The norm was originally defined as a bare Bochner integral,
+$\isa{Lp\_norm}\;p\;a\;b\;g = \bigl(\int |g|^{p}\bigr)^{1/p}$. Isabelle's
+\isa{integral\(^{L}\)} is a \emph{total} function returning the junk value $0$ on a
+non-integrable argument (\isa{not\_integrable\_integral\_eq}), and \isa{powr\_0} gives
+$0^{1/p}=0$. So whenever $|g|^p$ failed to be integrable,
+$\isa{Lp\_norm}\;p\;a\;b\;g = 0 < \varepsilon$ held for \emph{every} $\varepsilon>0$.
+
+This is not hypothetical. ``Bounded sigmoidal'' constrains only the sup norm and the two
+limits, so with $V\subset(0,1)$ a Vitali set,
+\[
+  \sigma(x)=0\ (x\le 0),\qquad
+  \sigma(x)=[x\in V]\ (0<x<1),\qquad
+  \sigma(x)=1\ (x\ge 1)
+\]
+is a bounded sigmoidal function in exactly the paper's sense and is not measurable.
+
+Writing $\|G_N-f\|_{\Lp}$ presupposes $G_N-f\in\Lp$; on paper the notation carries that
+silently, in a total logic it must be discharged. The formalisation had discharged it with a
+hypothesis --- but one stronger than necessary. The diagnosis was right; the remedy was the
+wrong shape.
+
+\section{Stage 1: the integrability guard}
+
+The defect is in the definition, so that is where it was fixed:
+
+\begin{quote}
+\isa{"Lp\_norm p a b g =}\\
+\isa{~~~(if integrable (lebesgue\_on \{a..b\}) (\(\lambda\)x. |g x| powr p)}\\
+\isa{~~~~then (\(\int\)x. |g x| powr p \(\partial\)(lebesgue\_on \{a..b\})) powr (1 / p)}\\
+\isa{~~~~else undefined)"}
+\end{quote}
+
+and identically for \isa{multivariate\_Lp\_norm}. These are internal real-valued working
+forms, not domain-enforcing norms: \isa{undefined} is an ordinary unspecified real.
+An inequality involving it does not imply integrability. The public statements use
+\isa{Lp\_enorm}, which now returns infinity for a nonmeasurable powered absolute value.
+The verified lemma \isa{Lp\_enorm\_finite\_integrable} shows that a finite public error
+bound entails integrability. Uses of the internal real-valued forms retain explicit
+integrability premises.
+
+\paragraph{It found real gaps.} Theorems 3.2 and 5.4 each needed a genuinely new lemma ---
+integrability of $|G_N-f|^p$ --- that no proof had established, because the junk value had been
+absorbing it. Both follow from \isa{Lp\_Minkowski\_integrable} on the splitting
+$G_N-f=(G_N-g)+(g-f)$ the estimates already use.
+
+\section{Stage 2: the extended reals}
+
+Guarding on integrability is sound but not honest: for measurable $g$ with a divergent integral
+--- $\int_0^1 1/x$ --- the norm is not undefined, it is $\infty$. So the norm the theorems are
+stated with is now \isa{Lp\_enorm}, \isa{ennreal}-valued, guarded on \emph{measurability},
+generic over the measure. Its behaviour is proved: \isa{Lp\_enorm\_eq\_top} (divergent
+$\Rightarrow$ \isa{top}), \isa{Lp\_enorm\_eq\_seminorm} (integrable $\Rightarrow$ agrees with
+the real-valued seminorm), and
+\[
+  \isa{Lp\_enorm\_less\_top\_iff}:\quad
+  \isa{Lp\_enorm}\ p\ M\ g < \isa{top} \iff \isa{integrable}\ M\ (\lambda x.\ |g\,x|^{p}),
+\]
+the characterisation a real-valued norm cannot express.
+
+\paragraph{The extended reals do not remove the guard.} \isa{nn\_integral} is total, and on a
+non-measurable argument returns the \emph{lower} integral, which can be finite and small. The
+guard survives but weakens from \isa{integrable} to \isa{measurable}. The two mechanisms
+compose: the extended reals handle divergence, the guard handles non-measurability.
+
+\paragraph{Architecture.} The four theorems are stated with \isa{Lp\_enorm}. H\"older and
+Minkowski stay in \isa{real} on \isa{Lp\_seminorm}, where they are already proved and are used
+only \emph{inside} proofs with integrability in hand; \isa{Lp\_enorm\_eq\_Lp\_norm} and
+\isa{Lp\_enorm\_eq\_multivariate\_Lp\_norm} bridge the layers. Migrating \isa{Lp\_seminorm} too
+would have forced $\sim$270 lines of H\"older and Minkowski to be reproved under truncated
+subtraction, for no gain in what the theorems say.
+
+\section{Stage 3: the hypothesis weakened}
+
+All four theorems now assume \isa{meas\_sigmoidal: "\(\sigma\) \(\in\) borel\_measurable
+borel"}. This suffices because $x\mapsto w(x-t)$ is continuous hence Borel, so $\sigma$ composed
+with it is Borel; the network is a finite linear combination of such terms, hence Borel and
+bounded; and on a finite-measure set with $|f|^p$ integrable, $|G_N-f|^p$ is integrable.
+
+\paragraph{The multivariate half was free.} Six textual substitutions, built first try.
+\isa{multivariate\_network\_measurable} had only ever used continuity in its first line, to
+derive measurability via \isa{borel\_measurable\_continuous\_onI}.
+
+\paragraph{The one-dimensional half was not, and propagated further than expected.} Dropping
+continuity of $\sigma$ means the \emph{network} is no longer continuous either, so two facts
+that had come free from ``continuous on a compact interval'' had to be rebuilt.
+
+\begin{itemize}
+\item Theorem 3.1's proof is now measure-theoretic, mirroring Theorem 5.3: the network is Borel
+  by a new reusable \isa{sigma\_shift\_measurable}; integrability comes from
+  \isa{finite\_measure.integrable\_const\_bound} against the uniform bound; the estimate from
+  \isa{integral\_mono\_AE}. The Henstock--Kurzweil bridge \isa{Lp\_norm\_continuous\_eq} is no
+  longer on the path (it remains, as a fact about continuous integrands).
+\item \textbf{Theorem 3.2 was the unanticipated part.} Both its \isa{G\_meas} and its
+  \isa{Gg\_int\_ab} rested on continuity of the network, and integrability of $|G-g|^p$ cannot
+  be recovered from an $\Lp$ bound --- a small norm does not imply integrability. The fix was
+  to strengthen Theorem 3.1 to \emph{return} the integrability it already proves internally;
+  Theorem 3.2 and the \isa{ennreal} form of 3.1 both take it from there instead of re-deriving
+  it.
+\item \isa{borel\_measurable\_lebesgue\_onI} was added to \isa{Lp\_Inequalities}: the general
+  \isa{euclidean\_space} form of a helper that at the time existed only for \isa{vec}, inside a
+  mollifier theory that \isa{Lp\_Approximation} does not import. (That \isa{vec}-only variant
+  has since been deleted, and every call site now uses the general form.)
+\end{itemize}
+
+\paragraph{The witness.} \isa{Concrete\_Sigmoidal\_Examples.thy} now carries a third family
+beside the logistic and Gompertz sigmoids, both of which are smooth:
+\isa{heaviside\_is\_bounded\_function}, \isa{heaviside\_measurable},
+\isa{heaviside\_not\_continuous}, and \isa{heaviside\_Lp\_approximation\_theorem} --- Theorem
+3.1 instantiated at the Heaviside step function. That instance was \emph{not provable} under
+the old hypothesis, which is what makes measurability a repair rather than an over-correction.
+
+\isa{sigmoidal\_network\_continuous} survives and still holds, but is no longer on the path to
+any theorem.
+
+\section{Practical notes worth keeping}
+
+\begin{itemize}
+\item \textbf{\isa{\(\top\)} does not lex in this session.} \isa{Lp\_Inequalities} checked clean
+  standalone under \isa{-l HOL-Analysis} and then failed in the real build: the session's parent
+  is \isa{Real\_and\_Complex\_Analytic}/\isa{Smooth\_Manifolds}, not plain HOL-Analysis. Use the
+  constant name \isa{top}. Corollary: \emph{a standalone \isa{eval\_at} in a different logic is
+  not evidence about this session.}
+\item \textbf{\isa{ennreal} has no \isa{powr} instance}, and no \isa{ln} instance to build one
+  on --- hence \isa{ennreal\_powr}. Its \isa{minus} is truncated
+  (\isa{\(\lambda\)a b. max 0 (a - b)}).
+\item \textbf{Conversions only go upward.} The bridges map $\isa{real}\to\isa{ennreal}$, never
+  back: \isa{enn2real top = 0} is a \isa{[simp]} rule, so converting down at the boundary would
+  reintroduce the collapse being removed.
+\item \textbf{\isa{\(\backslash\)<\^{}const>} in a header paragraph fails} when the paragraph
+  precedes the definition it names. Three build cycles were lost to this; in a header, write
+  plain \isa{\(\backslash\)<open>Name\(\backslash\)<close>}.
+\item \textbf{Filter tactics diverged where an explicit $\varepsilon$-$\delta$ proof did not.}
+  Proving \isa{heaviside\_not\_continuous} via \isa{filterlim\_at\_split} and \isa{tendsto\_cong}
+  ran $>$20 min at $\sim$5\,GB, twice. Naming the $\delta$ explicitly and never constructing a
+  limit terminates in seconds, and is half the length. Prefer the proof that gives a tactic no
+  filter to search over.
+\item \textbf{A timed-out run reports zero errors.} \isa{timeout} returning \isa{124} means
+  nothing was verified --- a hang masks every proof after it. Always check the exit code, not
+  just the error count. Also, \isa{timeout} signals the \isa{isabelle} wrapper and not the
+  \isa{poly} child, which survives and spins at 100\% CPU; kill it before starting anything
+  else.
+\end{itemize}
+
+\end{document}

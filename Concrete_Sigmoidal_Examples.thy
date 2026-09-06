@@ -1,7 +1,7 @@
 section \<open>Applications to Specific Sigmoidal Functions\<close>
 
 theory Concrete_Sigmoidal_Examples
-  imports Universal_Approximation_1d Simultaneous_Approximation Lp_Approximation
+  imports Universal_Approximation_1d Simultaneous_Approximation Lp_Approximation Simultaneous_Approximation_General_j
 begin
 
 text \<open>
@@ -538,5 +538,126 @@ corollary heaviside_Lp_approximation_theorem:
   by (rule sigmoidal_Lp_approximation_theorem
         [OF heaviside_is_sigmoidal heaviside_is_bounded_function heaviside_measurable
             a_lt_b contin_f p_geq_1 eps_pos])
+
+
+subsection \<open>Corollaries 6.1 and 6.2: the prescribed weights\<close>
+
+(* Corollary 6.1: the prescribed logistic weight, including the positive slack delta. *)
+definition logistic_paper_weight where
+  "logistic_paper_weight a b delta N = real N/(b-a) * ln (real N-1) + delta"
+
+(* Corollary 6.1: one N approximates f and every derivative through order n. *)
+corollary logistic_paper_joint_approximation:
+  assumes ab: "a < b" and ck: "C_k_on (Suc n) f U" and sub: "{a..b} \<subseteq> U"
+    and n: "1 \<le> n" and e: "0 < e" and delta: "0 < delta"
+  shows "\<exists>N. n+3 < N \<and> 0 < logistic_paper_weight a b delta N \<and>
+    Sup ((\<lambda>x. \<bar>G_network sigmoid f a b N (logistic_paper_weight a b delta N) x - f x\<bar>) ` {a..b}) < e \<and>
+    (\<forall>j\<in>{1..n}. Sup ((\<lambda>x. \<bar>Gj_network sigmoid f (unif_part a b N) ((b-a)/N)
+        N j (logistic_paper_weight a b delta N) x - (deriv ^^ j) f x\<bar>) ` {a..b}) < e)"
+proof (rule joint_approximation_prescribed_weights[OF sigmoid_is_bounded_function ab ck sub n e])
+  fix N :: nat assume N: "3 < N"
+  have lp: "0 < ln (real N-1)" using N by simp
+  have "0 < real N/(b-a) * ln (real N-1)" using ab N lp by (intro mult_pos_pos divide_pos_pos) auto
+  then show "0 < logistic_paper_weight a b delta N"
+    unfolding logistic_paper_weight_def using delta by linarith
+next
+  fix N :: nat assume N: "3 < N"
+  have h: "0 < (b-a)/real N" using ab N by simp
+  have w: "(1 / ((b-a)/real N)) * ln (real N-1) < logistic_paper_weight a b delta N"
+    unfolding logistic_paper_weight_def using delta by simp
+  show "\<forall>k < N+2.
+      (\<forall>y. y - unif_part a b N ! k \<ge> (b-a)/N \<longrightarrow> \<bar>sigmoid (logistic_paper_weight a b delta N*(y-unif_part a b N ! k))-1\<bar> < 1/N) \<and>
+      (\<forall>y. y - unif_part a b N ! k \<le> -((b-a)/N) \<longrightarrow> \<bar>sigmoid (logistic_paper_weight a b delta N*(y-unif_part a b N ! k))\<bar> < 1/N)"
+    using logistic_step_saturation[OF _ h w] N by auto
+qed
+
+(* Corollary 6.2: the printed Gompertz weight; the logarithms are inside absolute values. *)
+definition gompertz_paper_weight where
+  "gompertz_paper_weight alpha beta a b delta N =
+    real N / ((b-a)*beta) *
+      max \<bar>ln (-(1/alpha) * ln ((real N-1)/real N))\<bar>
+          \<bar>ln ((1/alpha) * ln (real N))\<bar> + delta"
+
+(* Auxiliary for Corollary 6.2: rewrite the printed weight into the tail-bound coordinates. *)
+lemma gompertz_paper_weight_eq:
+  assumes alpha: "0 < alpha" and N: "1 < N"
+  shows "gompertz_paper_weight alpha beta a b delta N =
+    real N / ((b-a)*beta) *
+      max \<bar>ln (alpha / ln (real N / (real N-1)))\<bar>
+          \<bar>ln (alpha / ln (real N))\<bar> + delta"
+proof -
+  have np: "0 < real N" and nm: "0 < real N-1" using N by auto
+  have lnN: "0 < ln (real N)" using N by simp
+  have ratio: "1 < real N / (real N-1)" using N by (simp add: divide_less_eq)
+  have lnR: "0 < ln (real N / (real N-1))" using ratio by simp
+  have logratio: "- ln ((real N-1)/real N) = ln (real N/(real N-1))"
+    using np nm by (simp add: ln_div)
+  have arg: "-(1/alpha) * ln ((real N-1)/real N) = ln (real N/(real N-1))/alpha"
+    using arg_cong[OF logratio, of "\<lambda>x. x/alpha"] by simp
+  show ?thesis unfolding gompertz_paper_weight_def arg
+    using alpha lnN lnR by (simp add: ln_div abs_minus_commute)
+qed
+
+(* Auxiliary for Corollary 6.2: the prescribed weight is positive and exceeds both tail thresholds. *)
+lemma gompertz_paper_weight_sufficient:
+  assumes alpha: "0 < alpha" and beta: "0 < beta" and ab: "a < b"
+    and delta: "0 < delta" and N: "3 < N"
+  shows "0 < gompertz_paper_weight alpha beta a b delta N"
+    and "(1 / ((b-a)/real N)) *
+      max ((1/beta) * ln (alpha / ln (real N/(real N-1))))
+          (- ((1/beta) * ln (alpha / ln (real N))))
+      < gompertz_paper_weight alpha beta a b delta N"
+proof -
+  let ?A = "ln (alpha / ln (real N/(real N-1)))"
+  let ?B = "ln (alpha / ln (real N))"
+  have N1: "1 < N" using N by simp
+  have pref: "0 < real N/((b-a)*beta)" using N ab beta by simp
+  have eq: "gompertz_paper_weight alpha beta a b delta N =
+      real N/((b-a)*beta) * max \<bar>?A\<bar> \<bar>?B\<bar> + delta"
+    by (rule gompertz_paper_weight_eq[OF alpha N1])
+  show "0 < gompertz_paper_weight alpha beta a b delta N"
+    unfolding eq using pref delta by (smt (verit) abs_ge_zero mult_nonneg_nonneg)
+  have scaled: "max ((1/beta)*?A) (-((1/beta)*?B)) = (1/beta) * max ?A (-?B)"
+    using beta by (simp add: max_divide_distrib_right)
+  have max_le: "max ?A (-?B) \<le> max \<bar>?A\<bar> \<bar>?B\<bar>"
+    by (intro max.mono) auto
+  have bound: "real N/((b-a)*beta) * max ?A (-?B)
+      \<le> real N/((b-a)*beta) * max \<bar>?A\<bar> \<bar>?B\<bar>"
+    using max_le pref by (intro mult_left_mono) auto
+  have coeff: "(1 / ((b-a)/real N)) * ((1/beta) * max ?A (-?B)) =
+      real N/((b-a)*beta) * max ?A (-?B)"
+    by (simp add: algebra_simps)
+  show "(1 / ((b-a)/real N)) * max ((1/beta)*?A) (-((1/beta)*?B))
+      < gompertz_paper_weight alpha beta a b delta N"
+    unfolding eq scaled coeff using bound delta by argo
+qed
+
+(* Corollary 6.2: the printed weight, one N, f, and every derivative through order n. *)
+corollary gompertz_paper_joint_approximation:
+  assumes alpha: "0 < alpha" and beta: "0 < beta"
+    and ab: "a < b" and ck: "C_k_on (Suc n) f U" and sub: "{a..b} \<subseteq> U"
+    and n: "1 \<le> n" and e: "0 < e" and delta: "0 < delta"
+  shows "\<exists>N. n+3 < N \<and> 0 < gompertz_paper_weight alpha beta a b delta N \<and>
+    Sup ((\<lambda>x. \<bar>G_network (sigmoid_gompertz alpha beta) f a b N
+      (gompertz_paper_weight alpha beta a b delta N) x - f x\<bar>) ` {a..b}) < e \<and>
+    (\<forall>j\<in>{1..n}. Sup ((\<lambda>x. \<bar>Gj_network (sigmoid_gompertz alpha beta) f
+      (unif_part a b N) ((b-a)/N) N j (gompertz_paper_weight alpha beta a b delta N) x
+        - (deriv ^^ j) f x\<bar>) ` {a..b}) < e)"
+proof (rule joint_approximation_prescribed_weights[OF gompertz_is_bounded_function[OF alpha] ab ck sub n e])
+  fix N :: nat assume N: "3 < N"
+  show "0 < gompertz_paper_weight alpha beta a b delta N"
+    by (rule gompertz_paper_weight_sufficient(1)[OF alpha beta ab delta N])
+next
+  fix N :: nat assume N: "3 < N"
+  have N1: "1 < N" using N by simp
+  have h: "0 < (b-a)/real N" using ab N by simp
+  note w = gompertz_paper_weight_sufficient[OF alpha beta ab delta N]
+  show "\<forall>k < N+2.
+      (\<forall>y. y - unif_part a b N ! k \<ge> (b-a)/N \<longrightarrow>
+        \<bar>sigmoid_gompertz alpha beta (gompertz_paper_weight alpha beta a b delta N*(y-unif_part a b N ! k))-1\<bar> < 1/N) \<and>
+      (\<forall>y. y - unif_part a b N ! k \<le> -((b-a)/N) \<longrightarrow>
+        \<bar>sigmoid_gompertz alpha beta (gompertz_paper_weight alpha beta a b delta N*(y-unif_part a b N ! k))\<bar> < 1/N)"
+    using gompertz_step_saturation[OF alpha beta N1 h w] by (auto simp: minus_divide_left)
+qed
 
 end

@@ -46,6 +46,7 @@ Keep this checklist current; a box is checked only after source verification.
 - [x] Add a machine-checked bridge between grid_point and sigma_anchor at positive heights, so the two center functions cannot silently drift apart.
 - [x] List Definition 2.1, Lemma 2.1, Lemma 5.1, Remark 5.2 and the RBF commentary in the correspondence table.
 - [x] Add `Numerical_examples.thy` covering Section 7: the three example functions exactly as printed, the proof that the displayed f' is the derivative of (7.1), membership of (7.2) in L^1(R), continuity of the bivariate target, and each example exhibited as an instance of the theorem the paper invokes for it. The figures and the reported numerical errors are explicitly not claimed.
+- [x] Dissolve `Paper_Corollaries.thy` and `Paper_Multivariate.thy`. They existed only because the generic lemma `strict_sup_from_half_bound` sat high in the import order, forcing every strict-supremum form above it. That lemma is now `Sup_Estimates.thy` at the bottom, each supremum form sits beside its pointwise counterpart, and Corollaries 6.1-6.2 sit beside the concrete sigmoids. `Paper_5_2_Counterexample.thy` is renamed `Theorem_5_2_Counterexample.thy`.
 
 ## Documentation and final verification
 

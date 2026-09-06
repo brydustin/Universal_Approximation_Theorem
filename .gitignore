@@ -10,3 +10,6 @@ output/
 *.log
 *.out
 *.toc
+
+# jEdit autosave buffers
+\#*#

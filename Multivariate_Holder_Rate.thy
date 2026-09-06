@@ -22,9 +22,9 @@ text \<open>
   (\<open>multivariate_H2_bound\<close>) uses the sufficient mesh condition \<open>h * CARD('n) < \<delta>\<close>, so
   choosing \<open>\<delta> = h * (CARD('n)+2)\<close> gives the constant below. This is a valid
   replacement bound, not a proof of the paper's printed coefficient. The independent
-  theory \<open>Paper_5_2_Counterexample\<close> refutes that printed coefficient under its stated
-  hypotheses. Theory \<open>Paper_Multivariate\<close> provides the strict-supremum formulation
-  of a corrected bound.
+  theory \<open>Theorem_5_2_Counterexample\<close> refutes that printed coefficient under its stated
+  hypotheses.  The strict-supremum formulation of this corrected bound,
+  \<open>multivariate_holder_rate_sup\<close>, is at the end of this theory.
 \<close>
 
 (* Auxiliary for Theorem 5.2; not separately numbered. *)
@@ -210,6 +210,45 @@ proof -
           < (1 + (1 + Sup ((\<lambda>t. \<bar>\<sigma> t\<bar>) ` UNIV)) * L
                 * ((b - a) * (real CARD('n) + 2)) powr \<alpha>) / real N powr \<alpha>"
         unfolding S_def[symmetric] xs_def[symmetric] .
+  qed
+qed
+
+
+subsection \<open>Theorem 5.2's replacement bound in strict-supremum form\<close>
+
+(* Theorem 5.2, corrected bound: endpoint operator, all sufficiently large weights, strict supremum. *)
+theorem multivariate_holder_rate_sup:
+  fixes f :: "(real, 'n::finite) vec \<Rightarrow> real" and r0 :: 'n
+  assumes sig: "sigmoidal \<sigma>" and bnd: "bounded_function \<sigma>"
+    and ab: "a < b" and N: "0 < N" and L: "0 < L"
+    and alpha: "0 < alpha" and alpha1: "alpha \<le> 1"
+    and fc: "continuous_on {z. \<forall>r. z$r \<in> {a..b}} f"
+    and holder: "\<And>x y. (\<forall>r. x$r \<in> {a..b}) \<Longrightarrow> (\<forall>r. y$r \<in> {a..b})
+      \<Longrightarrow> \<bar>f x-f y\<bar> \<le> L*norm (x-y) powr alpha"
+  shows "\<exists>w0>0. \<forall>w\<ge>w0.
+    Sup ((\<lambda>z. \<bar>multivariate_network \<sigma> f r0 (unif_part a b N) N w z-f z\<bar>)
+      ` {z. \<forall>r. z$r \<in> {a..b}}) <
+    (2 + (1 + Sup ((\<lambda>t. \<bar>\<sigma> t\<bar>) ` UNIV))*L*
+      ((b-a)*(real CARD('n)+2)) powr alpha) / real N powr alpha"
+proof -
+  let ?A = "(1 + Sup ((\<lambda>t. \<bar>\<sigma> t\<bar>) ` UNIV))*L*((b-a)*(real CARD('n)+2)) powr alpha"
+  obtain w0 where w0: "0 < w0" and bd: "\<forall>w\<ge>w0. \<forall>z. (\<forall>r. z$r \<in> {a..b}) \<longrightarrow>
+      \<bar>multivariate_network \<sigma> f r0 (unif_part a b N) N w z-f z\<bar> <
+      (1+?A) / real N powr alpha"
+    using multivariate_holder_rate[OF sig bnd ab N L alpha alpha1 fc holder] by blast
+  have ne: "{z :: (real, 'n) vec. \<forall>r. z$r \<in> {a..b}} \<noteq> {}"
+    using ab by (auto intro!: exI[where x="\<chi> r. a"])
+  show ?thesis
+  proof (intro exI[where x=w0] conjI w0 allI impI)
+    fix w assume w: "w0 \<le> w"
+    have sup: "Sup ((\<lambda>z. \<bar>multivariate_network \<sigma> f r0 (unif_part a b N) N w z-f z\<bar>)
+      ` {z. \<forall>r. z$r \<in> {a..b}}) \<le> (1+?A) / real N powr alpha"
+      by (rule cSup_least) (use ne in simp, use bd w in fastforce)
+    have "(1+?A) / real N powr alpha < (2+?A) / real N powr alpha"
+      using N by (intro divide_strict_right_mono) auto
+    then show "Sup ((\<lambda>z. \<bar>multivariate_network \<sigma> f r0 (unif_part a b N) N w z-f z\<bar>)
+      ` {z. \<forall>r. z$r \<in> {a..b}}) < (2+?A) / real N powr alpha"
+      using sup by linarith
   qed
 qed
 

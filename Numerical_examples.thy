@@ -1,7 +1,7 @@
 section \<open>Section 7: the numerical examples\<close>
 
 theory Numerical_examples
-  imports Translated_Lp_Approximation "HOL-Analysis.Interval_Integral"
+  imports Translated_Lp_Approximation Concrete_Sigmoidal_Examples "HOL-Analysis.Interval_Integral"
 begin
 
 text \<open>

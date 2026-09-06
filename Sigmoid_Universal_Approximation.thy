@@ -21,9 +21,7 @@ theory Sigmoid_Universal_Approximation
           Forward_Difference_Consistency
           Simultaneous_Approximation_Rate
           Simultaneous_Approximation_General_j
-          Paper_Corollaries
-          Paper_Multivariate
-          Paper_5_2_Counterexample
+          Theorem_5_2_Counterexample
           Translated_Lp_Approximation
           Numerical_examples
 begin

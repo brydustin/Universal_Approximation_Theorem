@@ -1,5 +1,7 @@
-theory Paper_5_2_Counterexample
-  imports Paper_Multivariate
+section \<open>A counterexample to the printed bound of Theorem 5.2\<close>
+
+theory Theorem_5_2_Counterexample
+  imports Multivariate_Approximation
 begin
 
 (* Audit of Theorem 5.2: a bounded Borel sigmoidal activation allowed by its hypotheses. *)

@@ -1,7 +1,7 @@
 section \<open>Universal Approximation Theorem\<close>
 
 theory Universal_Approximation_1d
-  imports Asymptotic_Qualitative_Properties
+  imports Asymptotic_Qualitative_Properties Sup_Estimates
 begin
 
 text \<open>
@@ -1578,6 +1578,26 @@ proof-
           \<eta>_def \<eta>_pos \<delta>_pos \<delta>_prop N_defining_properties sat_N])
   show ?thesis
     by (intro exI[where x=N] exI[where x=w]) (use w_pos N_pos bound in simp)
+qed
+
+
+subsection \<open>Theorem 2.1 in the printed strict-supremum form\<close>
+
+(* Theorem 2.1: strict supremum formulation for arbitrary continuous targets. *)
+theorem sigmoidal_uniform_approximation_sup:
+  assumes sig: "sigmoidal \<sigma>" and bnd: "bounded_function \<sigma>"
+    and ab: "a < b" and fc: "continuous_on {a..b} f" and e: "0 < e"
+  shows "\<exists>N w. 0 < N \<and> 0 < w \<and>
+    Sup ((\<lambda>x. \<bar>G_network \<sigma> f a b N w x-f x\<bar>) ` {a..b}) < e"
+proof -
+  have e2: "0 < e/2" using e by simp
+  obtain N w where N: "0 < N" and w: "0 < w"
+    and bd: "\<forall>x\<in>{a..b}. \<bar>G_network \<sigma> f a b N w x-f x\<bar> < e/2"
+    using sigmoidal_approximation_theorem[OF sig bnd ab fc e2]
+    unfolding G_network_def by blast
+  have sup: "Sup ((\<lambda>x. \<bar>G_network \<sigma> f a b N w x-f x\<bar>) ` {a..b}) < e"
+    by (rule strict_sup_from_half_bound) (use ab e bd in auto)
+  show ?thesis by (intro exI[where x=N] exI[where x=w]) (use N w sup in simp)
 qed
 
 end

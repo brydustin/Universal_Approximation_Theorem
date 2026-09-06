@@ -37,7 +37,7 @@ The original findings are preserved in [the audit snapshot](PAPER_AUDIT_2026-09-
 
 ## Theorem 5.2 has a false printed bound
 
-This is not just a changed proof constant. The file [Paper_5_2_Counterexample.thy](Paper_5_2_Counterexample.thy) verifies the following counterexample to the printed formula on p. 185.
+This is not just a changed proof constant. The file [Theorem_5_2_Counterexample.thy](Theorem_5_2_Counterexample.thy) verifies the following counterexample to the printed formula on p. 185.
 
 - Q = [0,1]^2, N = 3, alpha = 1, and f(x,y) = 10y. This target is continuous, has Hölder constant L = 10, and supremum norm 10.
 - The activation is 0 for negative arguments, 1 for positive arguments, and 10 at zero. It is Borel measurable, bounded and sigmoidal, with supremum norm 10. These are allowed by the paper's stated hypotheses.
@@ -95,6 +95,8 @@ The Lp layer is arranged so that no theory sits off the path of a stated result:
 - [Mollifier_Networks.thy](Mollifier_Networks.thy) — the coefficient formulas following (3.4) and the constructive Theorems 3.2 and 5.4.
 - [Lp_Representatives.thy](Lp_Representatives.thy) — the existential Lebesgue-target forms of those two theorems, derived from the constructive ones.
 - [Lp_Approximation_General.thy](Lp_Approximation_General.thy), [Multivariate_Lp_Approximation_General.thy](Multivariate_Lp_Approximation_General.thy) — the printed Borel-target Theorems 3.2 and 5.4, derived in turn from those, since a Borel target is measurable for the completed Lebesgue measure on the domain.
+
+Each result of the paper now sits beside the result it refines. The strict-supremum forms of Theorems 2.1, 4.1, 4.2, 5.1 and 5.2 are in the same theories as their pointwise counterparts, and Corollaries 6.1-6.2 are in [Concrete_Sigmoidal_Examples.thy](Concrete_Sigmoidal_Examples.thy) beside the logistic and Gompertz functions they are about. The single generic ingredient those supremum forms share, deriving a strict supremum bound from a halved pointwise bound, is [Sup_Estimates.thy](Sup_Estimates.thy) at the bottom of the import order. Two earlier theories, Paper_Corollaries and Paper_Multivariate, existed only because that four-line lemma sat high in the import order and forced the results that use it upwards; they have been dissolved.
 
 ## Constructivity
 

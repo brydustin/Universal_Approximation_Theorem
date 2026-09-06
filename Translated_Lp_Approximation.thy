@@ -1,7 +1,7 @@
 section \<open>\<open>L\<^sup>p\<close> approximation on translated boxes\<close>
 
 theory Translated_Lp_Approximation
-  imports Paper_Multivariate Mollifier_Networks
+  imports Mollifier_Networks
 begin
 
 text \<open>

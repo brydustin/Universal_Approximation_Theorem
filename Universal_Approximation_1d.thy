@@ -36,6 +36,18 @@ qed
 definition bounded_function :: "(real \<Rightarrow> real) \<Rightarrow> bool" where
   "bounded_function f \<longleftrightarrow> bdd_above (range (\<lambda>x. \<bar>f x\<bar>))"
 
+text \<open>
+  Equivalently, and more idiomatically for the Isabelle library, \<^const>\<open>bounded_function\<close>
+  says exactly that the range is a bounded set.  The \<open>bdd_above\<close> phrasing is kept because
+  the estimates below use the supremum \<open>Sup ((\<lambda>x. \<bar>\<sigma> x\<bar>) ` UNIV)\<close> directly and need its
+  defining property; this bridge records that nothing is lost by either reading.
+\<close>
+(* Auxiliary for Theorems 2.1-5.4: the bounded-activation hypothesis, stated set-theoretically. *)
+lemma bounded_function_iff_bounded_range:
+  fixes f :: "real \<Rightarrow> real"
+  shows "bounded_function f \<longleftrightarrow> bounded (range f)"
+  unfolding bounded_function_def bounded_iff bdd_above_def by auto
+
 (* Theorem 2.1: uniform nodes, with the paper index shifted by one. *)
 definition unif_part :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real list" where
   "unif_part a b N =

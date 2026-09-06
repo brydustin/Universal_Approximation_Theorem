@@ -249,9 +249,5 @@ corollary smooth_sigmoid:
   unfolding smooth_on_def
   by (meson C_k_on_def differentiable_imp_continuous_on differentiable_on_def nth_derivative_sigmoid_differentiable open_UNIV sigmoid_differentiable)
 
-(* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
-lemma tendsto_exp_neg_at_infinity: "((\<lambda>(x :: real). exp (-x)) \<longlongrightarrow> 0) at_top"
-  by(subst tendsto_at_top_epsilon_def, metis abs_exp_cancel abs_minus_cancel abs_minus_commute 
-     diff_0 exp_less_mono exp_ln_iff gt_ex minus_le_iff minus_less_iff order_le_less_trans)
 
 end

@@ -1,7 +1,7 @@
 section \<open>Asymptotic and Qualitative Properties\<close>
 
 theory Asymptotic_Qualitative_Properties
-  imports Derivative_Identities_Smoothness
+  imports Derivative_Identities_Smoothness "HOL-Real_Asymp.Real_Asymp"
 begin
 
 subsection \<open>Limits at Infinity of Sigmoid and its Derivative\<close>
@@ -64,84 +64,11 @@ qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sig_deriv_lim_at_top: "(deriv sigmoid \<longlongrightarrow> 0) at_top"
-proof (subst tendsto_at_top_epsilon_def, clarify)
-  fix \<epsilon> :: real
-  assume \<epsilon>_pos: "0 < \<epsilon>"
-
-  text \<open>Using the fact that \(\sigma(x) \to 1\) as \(x \to +\infty\).\<close>
-
-  obtain N where N_def: "\<forall>x \<ge> N. \<bar>sigmoid x - 1\<bar> < \<epsilon> / 2"
-    using lim_sigmoid_infinity[unfolded tendsto_at_top_epsilon_def] \<epsilon>_pos
-    by (metis  half_gt_zero)
-
-  have deriv_bound: "\<forall>x \<ge> N. \<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 1\<bar>"
-  proof (clarify)
-    fix x
-    assume "x \<ge> N"
-    hence "\<bar>deriv sigmoid x\<bar> = \<bar>sigmoid x - 1 + 1\<bar> * \<bar>1 - sigmoid x\<bar>"
-      by (simp add: abs_mult sigmoid_derivative)
-
-    also have "... \<le> \<bar>sigmoid x - 1\<bar>"
-      by (smt (verit) mult_cancel_right1 mult_right_mono sigmoid_range)
-    finally show "\<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 1\<bar>".      
-  qed
-
-  have "\<forall>x \<ge> N. \<bar>deriv sigmoid x\<bar> < \<epsilon>"
-  proof (clarify)
-    fix x
-    assume "x \<ge> N"
-    hence "\<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 1\<bar>"
-      using deriv_bound by simp
-    also have "... < \<epsilon> / 2"
-      using `x \<ge> N` N_def by simp
-    also have "... < \<epsilon>"
-      using \<epsilon>_pos by simp
-    finally show "\<bar>deriv sigmoid x\<bar> < \<epsilon>" .
-  qed
-
-  then show "\<exists>N::real. \<forall>x\<ge>N. \<bar>deriv sigmoid x - (0::real)\<bar> < \<epsilon>"
-    by (metis diff_zero)
-qed
+  unfolding sigmoid_derivative[abs_def] sigmoid_def by real_asymp
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sig_deriv_lim_at_bot: "(deriv sigmoid \<longlongrightarrow> 0) at_bot"
-proof (subst tendsto_at_bot_epsilon_def, clarify)
-  fix \<epsilon> :: real
-  assume \<epsilon>_pos: "0 < \<epsilon>"
-
-  text \<open>Using the fact that \(\sigma(x) \to 0\) as \(x \to -\infty\).\<close>
-
-  obtain N where N_def: "\<forall>x \<le> N. \<bar>sigmoid x - 0\<bar> < \<epsilon> / 2"
-    using lim_sigmoid_minus_infinity[unfolded tendsto_at_bot_epsilon_def] \<epsilon>_pos
-    by (meson half_gt_zero)
-
-  have deriv_bound: "\<forall>x \<le> N. \<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 0\<bar>"
-  proof (clarify)
-    fix x
-    assume "x \<le> N"
-    hence "\<bar>deriv sigmoid x\<bar> = \<bar>sigmoid x - 0 + 0\<bar> * \<bar>1 - sigmoid x\<bar>"
-      by (simp add: abs_mult sigmoid_derivative)
-    also have "... \<le> \<bar>sigmoid x - 0\<bar>"
-      by (smt (verit, del_insts) mult_cancel_left2 mult_left_mono sigmoid_range)
-    finally show "\<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 0\<bar>".
-  qed
-
-  have "\<forall>x \<le> N. \<bar>deriv sigmoid x\<bar> < \<epsilon>"
-  proof (clarify)
-    fix x
-    assume "x \<le> N"
-    hence "\<bar>deriv sigmoid x\<bar> \<le> \<bar>sigmoid x - 0\<bar>"
-      using deriv_bound by simp
-    also have "... < \<epsilon> / 2"
-      using `x \<le> N` N_def by simp
-    also have "... < \<epsilon>"
-      using \<epsilon>_pos by simp
-    finally show "\<bar>deriv sigmoid x\<bar> < \<epsilon>".
-  qed
-
-  then show "\<exists>N::real. \<forall>x \<le> N. \<bar>deriv sigmoid x - (0::real)\<bar> < \<epsilon>"
-    by (metis diff_zero)
-qed
+  unfolding sigmoid_derivative[abs_def] sigmoid_def by real_asymp
 
 subsection \<open>Curvature and Inflection\<close>
 
@@ -181,21 +108,8 @@ lemma sigmoid_positive_derivative:
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sigmoid_deriv_0:
-"deriv sigmoid 0 = 1/4"
-proof -
-  have f1: "1 / (1 + 1) = sigmoid 0"
-    by (simp add: sigmoid_def)
-  then have f2: "\<forall>r. sigmoid 0 * (r + r) = r"
-    by simp
-  then have f3: "\<forall>n. sigmoid 0 * numeral (num.Bit0 n) = numeral n"
-    by (metis (no_types) numeral_Bit0)
-  have f4: "\<forall>r. sigmoid r * sigmoid (- r) = deriv sigmoid r"
-    using sigmoid_derivative sigmoid_symmetry by presburger
-  have "sigmoid 0 = 0 \<longrightarrow> deriv sigmoid 0 = 1 / 4"
-    using f1 by force
-  then show ?thesis
-    using f4 f3 f2 by (metis (no_types) add.inverse_neutral divide_divide_eq_right nonzero_mult_div_cancel_left one_add_one zero_neq_numeral)
-qed
+  "deriv sigmoid 0 = 1/4"
+  by (simp add: sigmoid_derivative sigmoid_at_zero)
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma deriv_sigmoid_increase_on_negatives:

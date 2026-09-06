@@ -11,16 +11,7 @@ definition sigmoid :: "real \<Rightarrow> real" where
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_alt_def: "sigmoid x = inverse (1 + exp(-x))"
-proof -
-  have "sigmoid x = (exp(x) * exp(-x)) / ((1 + exp(x))* exp(-x))"
-    unfolding sigmoid_def by simp
-  also have "... = 1 / (1*exp(-x) + exp(x)*exp(-x))"
-    by (simp add: distrib_right exp_minus_inverse)
-  also have "... = inverse (exp(-x) + 1)"
-    by (simp add: divide_inverse_commute exp_minus)
-  finally show ?thesis
-    by simp
-qed
+  unfolding sigmoid_def by (simp add: field_simps exp_minus)
 
 subsection \<open>Range, Monotonicity, and Symmetry\<close>
 

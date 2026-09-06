@@ -23,6 +23,10 @@ session "Sigmoid_Universal_Approximation" = "Real_and_Complex_Analytic" +
 (* Timeout (in sec) in case of non-termination problems *)
   options [timeout = 600, document = pdf, document_output = "output", quick_and_dirty = false]
 
+(* real_asymp, used for the sigmoid derivative limits. *)
+  sessions
+    "HOL-Real_Asymp"
+
 
 (* To suppress document generation of some theories: *)
 (*

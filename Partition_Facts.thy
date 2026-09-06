@@ -1,7 +1,7 @@
 section \<open>Reusable Facts about the Uniform Partition\<close>
 
 theory Partition_Facts
-  imports Universal_Approximation_1d
+  imports Asymptotic_Qualitative_Properties
 begin
 
 text \<open>
@@ -12,6 +12,18 @@ text \<open>
   from scratch. Each lemma takes \<open>a\<close>, \<open>b\<close>, \<open>N\<close> (and, where needed, \<open>h\<close> and \<open>xs\<close>) as explicit
   parameters with explicit hypotheses, rather than via a \<open>locale\<close>.
 \<close>
+
+(* Theorem 2.1: uniform nodes, with the paper index shifted by one. *)
+definition unif_part :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real list" where
+  "unif_part a b N =
+     map (\<lambda>k. a + (real k -1 ) * ((b - a) / real N )) [0..<N+2]"
+
+(* For example, unif_part 0 1 4 = [-0.25, 0, 0.25, 0.5, 0.75, 1] :: real list.
+   Index 0 holds the exterior node x\<^sub>-\<^sub>1, so paper index k is list index k+1. *)
+
+(* Auxiliary for equation (2.2): the endpoint list includes the exterior node. *)
+lemma length_unif_part [simp]: "length (unif_part a b N) = N+2"
+  unfolding unif_part_def by simp
 
 (* Auxiliary partition fact for Theorems 2.1, 4.1 and 5.1; not separately numbered. *)
 lemma h_pos:

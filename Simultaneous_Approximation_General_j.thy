@@ -2403,7 +2403,7 @@ proof -
   have eta: "0 < eta" unfolding eta_def using e M S by simp
   obtain d where d: "0 < d"
     and dc: "\<forall>x\<in>{a..b}. \<forall>y\<in>{a..b}. \<bar>x-y\<bar> < d \<longrightarrow> \<bar>f x-f y\<bar> < eta"
-    using uniform_continuity_interval[OF ab fc eta] by blast
+    using uniform_continuity_interval[OF fc eta] by blast
   define K where "K = Max ((derivative_rate_constant \<sigma> f a b) ` {1..n})"
   have K: "\<And>j. j \<in> {1..n} \<Longrightarrow> derivative_rate_constant \<sigma> f a b j \<le> K"
     unfolding K_def by (rule Max_ge) auto

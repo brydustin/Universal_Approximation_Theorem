@@ -95,7 +95,7 @@ proof -
     \<open>uniform_continuity_interval\<close>, exactly as Theorem 2.1 uses it for \<open>f\<close> itself).\<close>
   obtain \<delta> where \<delta>_pos: "\<delta> > 0"
     and \<delta>_prop: "\<forall>x \<in> {a..b}. \<forall>y \<in> {a..b}. \<bar>x - y\<bar> < \<delta> \<longrightarrow> \<bar>deriv f x - deriv f y\<bar> < \<eta>"
-    using uniform_continuity_interval[OF a_lt_b g_cont \<eta>_pos] by blast
+    using uniform_continuity_interval[OF g_cont \<eta>_pos] by blast
 
   text \<open>Choose \<open>N\<close> large enough for all four needs: mesh \<open>h<\<delta>/2\<close>, \<open>1/N<\<eta>\<close>, the extra
     \<open>\<Delta>\<^sup>1 f\<close>-specific slack \<open>h\<sqdot>C_1<\<eta>\<close>, and \<open>N>3\<close> (matching Theorem 2.1's own \<open>N_def\<close>, with one

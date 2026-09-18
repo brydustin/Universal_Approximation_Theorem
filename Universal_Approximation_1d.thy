@@ -20,17 +20,11 @@ text \<open>
 (* Auxiliary for Theorem 2.1; not separately numbered. *)
 lemma uniform_continuity_interval:
   fixes f :: "real \<Rightarrow> real"
-  assumes "a < b"
   assumes "continuous_on {a..b} f"
   assumes  "\<epsilon> > 0"
-shows "\<exists>\<delta>>0. (\<forall>x y. x \<in> {a..b} \<and> y \<in> {a..b} \<and> \<bar>x - y\<bar> < \<delta> \<longrightarrow> \<bar>f x - f y\<bar> < \<epsilon>)"
-proof -
-  have "uniformly_continuous_on {a..b} f"
-    using assms(1,2) compact_uniformly_continuous by blast
-  thus ?thesis
-    unfolding uniformly_continuous_on_def
-    by (metis assms(3) dist_real_def)
-qed
+  shows "\<exists>\<delta>>0. (\<forall>x y. x \<in> {a..b} \<and> y \<in> {a..b} \<and> \<bar>x - y\<bar> < \<delta> \<longrightarrow> \<bar>f x - f y\<bar> < \<epsilon>)"
+  by (metis assms compact_Icc compact_uniformly_continuous dist_real_def uniformly_continuous_on_def)
+
 
 (* Bounded-activation hypothesis of Theorems 2.1-5.4; no separate paper definition number. *)
 definition bounded_function :: "(real \<Rightarrow> real) \<Rightarrow> bool" where
@@ -46,7 +40,7 @@ text \<open>
 lemma bounded_function_iff_bounded_range:
   fixes f :: "real \<Rightarrow> real"
   shows "bounded_function f \<longleftrightarrow> bounded (range f)"
-  unfolding bounded_function_def bounded_iff bdd_above_def by auto
+  unfolding bounded_function_def bounded_iff bdd_above_def by simp
 
 (* Theorem 2.1: uniform nodes, with the paper index shifted by one. *)
 definition unif_part :: "real \<Rightarrow> real \<Rightarrow> nat \<Rightarrow> real list" where
@@ -87,41 +81,34 @@ proof -
   then have N_pos: "N > 0"
     by simp
 
-
-
   (* Set the mesh width h. *)
   obtain h where h_def: "h = (b-a)/N"
     by simp
   then have h_pos: "h > 0"
-    using N_defining_properties a_lt_b by force
+    using N_defining_properties a_lt_b by simp
 
   (* Ensure h < \<delta>/2 so neighbor points are \<delta>-close. *)
   have h_lt_\<delta>_half: "h < \<delta> / 2"
   proof -
-    have "N > 2 * (b - a) / \<delta>"
+    have "2 * (b - a) / \<delta> < real N"
       using N_defining_properties by force
-    then have "N /2 >  (b - a) / \<delta>"
-      by (simp add: mult.commute)
-    then have " (N /2) * \<delta> >  (b - a)"
-      by (smt (verit, ccfv_SIG) \<delta>_pos divide_less_cancel nonzero_mult_div_cancel_right)
-    then have " (\<delta> /2) * N >  (b - a)"
-      by (simp add: mult.commute)
-    then have " (\<delta> /2)  >  (b - a) / N"
-      by (smt (verit, ccfv_SIG) \<delta>_pos a_lt_b divide_less_cancel nonzero_mult_div_cancel_right zero_less_divide_iff)
-    then show "h < \<delta> / 2"
-      using h_def by blast
+    then have b_minus_a: "b - a < \<delta> / 2 * real N"
+      using \<delta>_pos by (simp add: field_simps)
+    have "h = (b - a) / real N"
+      using h_def by simp
+    also have "... < (\<delta> / 2 * real N) / real N"
+      using b_minus_a N_pos by (intro divide_strict_right_mono, auto)
+    also have "... = \<delta> / 2"
+      using N_pos by simp
+    finally show ?thesis .
   qed
-
-  
-
+ 
   (* From N large \<Rightarrow> 1/N < \<eta>, needed when using the sigmoidal step bound. *)
   have one_over_N_lt_eta: "1 / real N < \<eta>"
-    using N_defining_properties \<eta>_pos
-    by (simp add: field_simps)
+    using N_defining_properties \<eta>_pos by (simp add: field_simps)
   (* Closed-form for the partition list xs N. *)
   have xs_eqs: "xs N = map (\<lambda>k. a +  (real k - 1) * ((b - a) /  N)) [0..<N+2]"
-    using unif_part_def xs_def by presburger
-
+    using unif_part_def xs_def by simp
     
   then have xs_els: "\<And>k. k \<in> {0..N+1} \<longrightarrow>  xs N ! k = a +  (real k-1) * h"
     by (metis (no_types, lifting) Suc_1 add_0 add_Suc_right atLeastAtMost_iff diff_zero h_def linorder_not_le not_less_eq_eq nth_map_upt)
@@ -132,12 +119,8 @@ proof -
   have first_element: "xs N !1 = a"
     by (simp add: xs_els)                      
   have last_element: "xs N !(N+1) = b"
-  proof - 
-    have "xs N !(N+1) = a +  N * h"
-      using xs_els by force
-    then show ?thesis
-      by (simp add: N_pos h_def)
-  qed
+    by (simp add: xs_els N_pos h_def)
+  
 
   (* Algebra on grid differences. *)
   have difference_of_terms: "\<And>j k . j \<in> {1..N+1} \<and>  k \<in> {1..N+1} \<and> j\<le> k \<longrightarrow> xs N ! k - xs N ! j = h*(real k-j)"
@@ -151,7 +134,7 @@ proof -
     have k_th_el: "xs N  ! k  = (a +  (real k-1) * h)"
       using k_type xs_els by auto
     then show "xs N ! k - xs N ! j = h * (real k - j)"
-      by (smt (verit, del_insts) j_th_el left_diff_distrib' mult.commute)
+      using j_th_el by argo
   qed
   then have difference_of_adj_terms: "\<And>k .  k \<in> {1..N+1}  \<longrightarrow> xs N ! k - xs N ! (k-1) = h"
   proof -
@@ -177,8 +160,8 @@ proof -
 
   from difference_of_terms have list_increasing: "\<And>j k . j \<in> {1..N+1} \<and> k \<in> {1..N+1} \<and> j \<le> k \<longrightarrow>  xs N ! j \<le> xs N !k"
     by (smt (verit, ccfv_SIG) h_pos of_nat_eq_iff of_nat_mono zero_less_mult_iff)
-  have els_in_ab: "\<And>k. k \<in> {1..N+1} \<longrightarrow> xs N ! k \<in> {a..b}"
-    using first_element last_element list_increasing by force
+  then have els_in_ab: "\<And>k. k \<in> {1..N+1} \<longrightarrow> xs N ! k \<in> {a..b}"
+    using first_element last_element by force
 
 
 
@@ -223,9 +206,6 @@ proof -
         from x_def have upper_bound: "x \<le> xs N! (N+1)"
           by simp
 
-
-
-
         obtain j where j_def: "j = (GREATEST j. xs N ! j \<le> x \<and>  j \<in> {1..N+1})"
           by blast
         have nonempty_definition: "{j \<in> {1..N+1}. xs N ! j \<le> x} \<noteq> {}"
@@ -239,8 +219,7 @@ proof -
           show "\<And>y. xs N ! y \<le> x \<and> y \<in> {1..N+1} \<Longrightarrow> y \<le> N + 1"
             by simp
         qed
-        have j_bounds: "j \<in> {1..N+1}"
-          using j_greatest by blast
+
         have xs_j_leq_x: "xs N ! j \<le> x"
           by (simp only: j_greatest)
 
@@ -251,7 +230,7 @@ proof -
         next
           assume j_not_SucN:"j \<noteq> N + 1"
           then have j_type: "j \<in> {1..N}"
-            by (metis Suc_eq_plus1 atLeastAtMost_iff j_bounds le_Suc_eq)
+            by (metis Suc_eq_plus1 atLeastAtMost_iff j_greatest le_Suc_eq)
           then have Suc_j_type: "j + 1 \<in> {2..N+1}"
             by (metis Suc_1 Suc_eq_plus1 atLeastAtMost_iff diff_Suc_Suc diff_is_0_eq)
           have equal_sets: "{j \<in> {1..N+1}. xs N ! j \<le> x} = {j \<in> {1..N}. xs N ! j \<le> x}"
@@ -267,9 +246,12 @@ proof -
             assume BWOC: "\<not> \<not> xs N ! (j + 1) \<le> x"
             then have Suc_j_type':"j+1 \<in> {1..N}"   (*This is not a mistake, by using the previous line BWOC we can conclude this, but in fact j+1 could be N+1.*)
               using Suc_j_type equal_sets add.commute by auto         
-            from j_def show False
-                using equal_sets  
-                by (smt (verit, del_insts) BWOC Greatest_le_nat One_nat_def Suc_eq_plus1 Suc_j_type' Suc_n_not_le_n  atLeastAtMost_iff mem_Collect_eq)
+            (* j+1 also witnesses the predicate, so it cannot exceed the greatest witness. *)
+            have "j + 1 \<le> j"
+              using j_def BWOC Suc_j_type'
+                Greatest_le_nat[of "\<lambda>j. xs N ! j \<le> x \<and> j \<in> {1..N+1}" "j+1" "N+1"]
+              by simp
+            then show False by simp
           qed
           then have "x \<in> {xs N ! j .. xs N ! (j+1)}"
             by (simp add: xs_j_leq_x)
@@ -288,19 +270,14 @@ proof -
     have i_leq_N: "i \<le> N"
       using i_def by presburger
     then have xs_i: "xs N ! i = a + (real i - 1) * h"
-      using xs_els by force
+      using xs_els by fastforce
     have xs_Suc_i: "xs N ! (i + 1) = a + real i * h"
-    proof - 
-      have "(i+1) \<in> {0..N+1} \<longrightarrow> xs N ! (i+1) = a + (real (i+1) - 1) * h"
-        using xs_els by blast
-      then show ?thesis
-        using i_leq_N by fastforce
-    qed
+      by (simp add: i_leq_N xs_els)
 
     from i_def have x_lower_bound_aux: "x \<ge>  (xs N ! i)"
       using atLeastAtMost_iff by blast
     then have x_lower_bound: "x \<ge> a + real (i-1) * h"
-      by (metis xs_i i_ge_1 of_nat_1 of_nat_diff)
+      using i_ge_1 xs_i by simp
 
     from i_def have x_upper_bound_aux: "xs N! (i+1) \<ge>  x"
       using atLeastAtMost_iff by blast
@@ -390,35 +367,24 @@ i.e.  Show that x -   xs N!k   \<ge> h for k \<in> { 0,...,i-1} *)
     proof (clarify)
       fix k
       assume k_def: "k \<in> {i+2..N+1}"
-      then have i_lt_k_pred: "i < k-1"
-        by (metis Suc_1 add_Suc_right atLeastAtMost_iff less_diff_conv less_eq_Suc_le)
-      then have k_nonzero: "k \<noteq> 0"
-        by linarith
-      from i_lt_k_pred have i_minus_k_pred_leq_Minus_One: "i - real (k - 1) \<le> -1"
-        by simp
-      have "x - xs N!k = x - (a + (real k - 1) * h)"
-      proof-
-        have k_def2: "k \<in> {1..N+1}"
-          using i_def k_def less_diff_conv2 by auto
-        then have "x - xs N ! k = x - (a + (real k - 1) * h)"
-          using xs_els by force
-        then show ?thesis
-          using i_lt_k_pred by force
+      have k_range: "k \<in> {0..N+1}"
+        using k_def by simp
+      have xs_k: "xs N ! k = a + (real k - 1) * h"
+        using xs_els k_range by blast
+      (* k \<ge> i+2 puts node k at least one full mesh step beyond the node a + i*h. *)
+      have gap: "real i - (real k - 1) \<le> -1"
+      proof -
+        have "i + 2 \<le> k" using k_def by simp
+        then have "real (i + 2) \<le> real k" by (simp only: of_nat_le_iff)
+        then show ?thesis by simp
       qed
-      also have "... \<le> -h"
-      proof -       
-        have x_upper_limit: "(xs N!(i+1)) = (a+(real i)*h)"
-          using i_def xs_els by fastforce
-        then have difference_of_terms: "(xs N!(i+1)) - (a+(real k - 1)*h) = ((real i) - (real k-1))*h"
-          by (smt (verit, ccfv_threshold) diff_is_0_eq i_lt_k_pred left_diff_distrib' nat_less_real_le nle_le of_nat_1 of_nat_diff of_nat_le_0_iff)
-        then have first_inequality: "x - (a + (real k - 1) * h) \<le> (xs N!(i+1)) - (a+(real k - 1)*h)"
-          using i_def by fastforce
-        have second_inequality: "(xs N!(i+1)) - (a+(real k - 1)*h) \<le> -h"
-          by (metis diff_is_0_eq' difference_of_terms h_pos i_lt_k_pred i_minus_k_pred_leq_Minus_One linorder_not_le mult.left_commute mult.right_neutral mult_minus1_right nle_le not_less_zero of_nat_1 of_nat_diff ordered_comm_semiring_class.comm_mult_left_mono)
-        then show ?thesis
-          by (smt (z3) combine_common_factor difference_of_terms first_inequality x_upper_limit)
-      qed
-      finally show "x - xs N ! k \<le> -h".
+      have "x - xs N ! k \<le> (a + real i * h) - (a + (real k - 1) * h)"
+        using x_upper_bound xs_k by linarith
+      also have "... = (real i - (real k - 1)) * h"
+        by (simp add: algebra_simps)
+      also have "... \<le> (-1) * h"
+        by (rule mult_right_mono) (use gap h_pos in auto)
+      finally show "x - xs N ! k \<le> -h" by simp
     qed
 
     
@@ -1435,7 +1401,7 @@ proof-
 
   (* Uniform continuity of f on compact interval \<Rightarrow> \<delta> > 0. *)
   have "\<exists>\<delta>>0. \<forall>x y. x \<in> {a..b} \<and> y \<in> {a..b} \<and> \<bar>x - y\<bar> < \<delta> \<longrightarrow> \<bar>f x - f y\<bar> < \<eta>"
-    by(rule uniform_continuity_interval,(simp add: assms(3,4))+, simp add: \<eta>_pos)
+    by (rule uniform_continuity_interval) (simp add: assms(4), simp add: \<eta>_pos)
   then obtain \<delta> where \<delta>_pos: "\<delta> > 0"
     and \<delta>_prop: "\<forall>x \<in> {a..b}. \<forall>y \<in> {a..b}. \<bar>x - y\<bar> < \<delta> \<longrightarrow> \<bar>f x - f y\<bar> < \<eta>"
     by blast  
@@ -1474,18 +1440,17 @@ proof-
   (* Ensure h < \<delta>/2 so neighbor points are \<delta>-close. *)
   have h_lt_\<delta>_half: "h < \<delta> / 2"
   proof -
-    have "N > 2 * (b - a) / \<delta>"
+    have "2 * (b - a) / \<delta> < real N"
       using N_defining_properties by force
-    then have "N /2 >  (b - a) / \<delta>"
-      by (simp add: mult.commute)
-    then have " (N /2) * \<delta> >  (b - a)"
-      by (smt (verit, ccfv_SIG) \<delta>_pos divide_less_cancel nonzero_mult_div_cancel_right)
-    then have " (\<delta> /2) * N >  (b - a)"
-      by (simp add: mult.commute)
-    then have " (\<delta> /2)  >  (b - a) / N"
-      by (smt (verit, ccfv_SIG) \<delta>_pos a_lt_b divide_less_cancel nonzero_mult_div_cancel_right zero_less_divide_iff)
-    then show "h < \<delta> / 2"
-      using h_def by blast
+    then have b_minus_a: "b - a < \<delta> / 2 * real N"
+      using \<delta>_pos by (simp add: pos_divide_less_eq field_simps)
+    have "h = (b - a) / real N"
+      using h_def by simp
+    also have "... < (\<delta> / 2 * real N) / real N"
+      using b_minus_a N_pos by (intro divide_strict_right_mono) auto
+    also have "... = \<delta> / 2"
+      using N_pos by simp
+    finally show ?thesis .
   qed
 
   

@@ -49,8 +49,15 @@ text \<open>
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_symmetry: "sigmoid (-x) = 1 - sigmoid x"
-  by (smt (verit, ccfv_SIG) add_divide_distrib divide_self_if 
-      exp_ge_zero inverse_eq_divide sigmoid_alt_def sigmoid_def)
+proof -
+  have "sigmoid (-x) = inverse (1 + exp x)"
+    by (simp add: sigmoid_alt_def)
+  also have "... = 1 - exp x / (1 + exp x)"
+    using add_pos_pos[OF zero_less_one exp_gt_zero[of x]] by (simp add: field_simps)
+  also have "... = 1 - sigmoid x"
+    by (simp add: sigmoid_def)
+  finally show ?thesis.
+qed
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 corollary "sigmoid(x) + sigmoid(-x) = 1"
@@ -129,11 +136,17 @@ lemma sigmoid_derivative:
   shows "deriv sigmoid x = sigmoid x * (1 - sigmoid x)"
   unfolding sigmoid_def
 proof -    
-  from field_differentiable_within_exp 
+  (* The three side conditions of deriv_divide, named. *)
   have "deriv (\<lambda>x. exp x /(1 + exp x)) x = (deriv (\<lambda>x. exp x) x * (\<lambda>x. 1 + exp x) x - (\<lambda>x. exp x) x * deriv (\<lambda>x. 1 + exp x) x) / ((\<lambda>x. 1 + exp x) x)\<^sup>2"
-    by(rule deriv_divide, 
-       simp add: Derivative.field_differentiable_add field_differentiable_within_exp,
-       smt (verit, ccfv_threshold) exp_gt_zero)
+  proof (rule deriv_divide)
+    show "(\<lambda>x. exp x) field_differentiable at x"
+      by (rule field_differentiable_within_exp)
+    show "(\<lambda>x. 1 + exp x) field_differentiable at x"
+      by (intro field_differentiable_add field_differentiable_const
+                field_differentiable_within_exp)
+    show "(\<lambda>x. 1 + exp x) x \<noteq> 0"
+      using add_pos_pos[OF zero_less_one exp_gt_zero[of x]] by simp
+  qed
   also have "... = ((exp x) * (1 + exp x) -(exp x)* (deriv (\<lambda>w. ((\<lambda>v. 1)w + (\<lambda> u. exp u)w)) x)) / (1 + exp x)\<^sup>2"
     by (simp add: DERIV_imp_deriv)
   also have "... = ((exp x) * (1 + exp x) -(exp x) * (deriv (\<lambda>v. 1) x  + deriv (\<lambda> u. exp u) x)) / (1 + exp x)\<^sup>2"
@@ -184,11 +197,7 @@ definition logit :: "real \<Rightarrow> real" where
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_logit_comp:
   "0 < p \<and> p < 1 \<Longrightarrow> sigmoid (logit p) = p"
-proof -
-  assume "0 < p \<and> p < 1"
-  then show "sigmoid (logit p ) = p"
-    by (smt (verit, del_insts) divide_pos_pos exp_ln_iff logit_def real_shrink_Galois sigmoid_def)
-qed
+  by (smt (verit, del_insts) divide_pos_pos exp_ln_iff logit_def real_shrink_Galois sigmoid_def)
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma logit_sigmoid_comp:
@@ -202,19 +211,28 @@ definition softmax :: "real^'k \<Rightarrow> real^'k" where
 lemma tanh_sigmoid_relationship:
   "2 * sigmoid (2 * x) - 1 = tanh x"
 proof -
+  have exp_nz: "exp x \<noteq> 0"
+    by (rule exp_not_eq_zero)
+  have denom_nz: "1 + exp (- (2 * x)) \<noteq> 0"
+    using add_pos_pos[OF zero_less_one exp_gt_zero[of "- (2 * x)"]] by simp
+  have exp_prod: "exp x * exp (- (2 * x)) = exp (- x)"
+    by (simp add: mult_exp_exp)
+  have num: "exp x * (1 - exp (- (2 * x))) = exp x - exp (- x)"
+    using exp_prod by (simp only: right_diff_distrib)
+  have den: "exp x * (1 + exp (- (2 * x))) = exp x + exp (- x)"
+    using exp_prod by (simp only: distrib_left)
   have "2 * sigmoid (2 * x) - 1 = 2 * (1 / (1 + exp (- (2 * x)))) - 1"
-    by (simp add: inverse_eq_divide sigmoid_alt_def)
-  also have "... = (2 / (1 + exp (- (2 * x)))) - 1"
-    by simp
+    by (simp only: inverse_eq_divide sigmoid_alt_def)
   also have "... = (2 - (1 + exp (- (2 * x)))) / (1 + exp (- (2 * x)))"
-    by (smt (verit, ccfv_SIG) diff_divide_distrib div_self exp_gt_zero)
-  also have "... = (exp x * (exp x - exp (-x))) / (exp x * (exp x + exp (-x)))"
-    by (smt (z3) exp_not_eq_zero mult_divide_mult_cancel_left_if tanh_altdef tanh_real_altdef)
-  also have "... = (exp x - exp (-x)) / (exp x + exp (-x))"
-    using exp_gt_zero by simp
+    using denom_nz by (simp add: field_simps)
+  also have "... = (exp x * (1 - exp (- (2 * x)))) / (exp x * (1 + exp (- (2 * x))))"
+    using nonzero_mult_divide_mult_cancel_left[OF exp_nz,
+            of "1 - exp (- (2 * x))" "1 + exp (- (2 * x))"] by simp
+  also have "... = (exp x - exp (- x)) / (exp x + exp (- x))"
+    by (simp only: num den)
   also have "... = tanh x"
-    by (simp add: tanh_altdef)
-  finally show ?thesis.
+    by (simp only: tanh_altdef)
+  finally show ?thesis .
 qed
 
 end

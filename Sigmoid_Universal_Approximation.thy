@@ -4,6 +4,7 @@ theory Sigmoid_Universal_Approximation
           Derivative_Identities_Smoothness
           Asymptotic_Qualitative_Properties
           Universal_Approximation_1d
+          Sigmoidal_Span_Density
           Partition_Facts
           Multivariate_Approximation
           Lp_Approximation

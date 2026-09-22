@@ -23,7 +23,7 @@ text \<open>
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
 lemma sigmoid_second_derivative:
-  shows "(deriv ^^ 2) sigmoid x = sigmoid x * (1 - sigmoid x) * (1 - 2 * sigmoid x)"
+  shows "(deriv ^^ 2) sigmoid (x::real) = sigmoid x * (1 - sigmoid x) * (1 - 2 * sigmoid x)"
 proof - 
   have "(deriv ^^ 2) sigmoid x =  deriv ((\<lambda>w. deriv sigmoid w)) x"
     by (simp add: second_derivative_alt_def)
@@ -62,16 +62,16 @@ text \<open>
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
 theorem nth_derivative_sigmoid:
-  "\<And>x. (deriv ^^ n) sigmoid x = 
+  "\<And>x::real. (deriv ^^ n) sigmoid x = 
     (\<Sum>k = 1..n+1. (-1)^(k+1) * fact (k - 1) * Stirling (n+1) k * (sigmoid x)^k)"
 proof (induct n)
   case 0
   show ?case
     by simp
 next
-  fix n x
+  fix n and x :: real
   assume induction_hypothesis: 
-    "\<And>x. (deriv ^^ n) sigmoid x = 
+    "\<And>x::real. (deriv ^^ n) sigmoid x = 
          (\<Sum>k = 1..n+1. (-1)^(k+1) * fact (k - 1) * Stirling (n+1) k * (sigmoid x)^k)"
   show "(deriv ^^ (Suc n)) sigmoid x = 
           (\<Sum>k = 1..(Suc n)+1. (-1)^(k+1) * fact (k - 1) * Stirling ((Suc n)+1) k * (sigmoid x)^k)"
@@ -195,7 +195,7 @@ qed
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
 corollary nth_derivative_sigmoid_differentiable:
-  "(deriv ^^ n) sigmoid differentiable (at x)"
+  "(deriv ^^ n) sigmoid differentiable (at (x::real))"
 proof -
   have "(\<lambda>x. \<Sum>k = 1..n+1. (-1)^(k+1) * fact (k - 1) * Stirling (n+1) k * (sigmoid x)^k)
    differentiable (at x)"
@@ -211,11 +211,11 @@ proof -
 qed
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
-corollary next_deriviative_sigmoid: "((deriv ^^ n) sigmoid has_real_derivative (deriv ^^ (Suc n)) sigmoid x) (at x)"
+corollary next_deriviative_sigmoid: "((deriv ^^ n) sigmoid has_real_derivative (deriv ^^ (Suc n)) sigmoid x) (at (x::real))"
   by (simp add: DERIV_deriv_iff_real_differentiable nth_derivative_sigmoid_differentiable)
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
-corollary deriv_sigmoid_has_deriv: "(deriv sigmoid has_real_derivative deriv (deriv sigmoid) x) (at x)"
+corollary deriv_sigmoid_has_deriv: "(deriv sigmoid has_real_derivative deriv (deriv sigmoid) x) (at (x::real))"
 proof -
   have "\<forall>f. (deriv ^^ (Suc 0)) f = deriv f"
     using first_derivative_alt_def by simp
@@ -225,9 +225,9 @@ qed
 
 (* Supplementary logistic derivative identity for Section 6; no separate paper label. *)
 corollary sigmoid_second_derivative':
-  "(deriv sigmoid has_real_derivative (sigmoid x * (1 - sigmoid x) * (1 - 2 * sigmoid x))) (at x)"
+  "(deriv sigmoid has_real_derivative (sigmoid x * (1 - sigmoid x) * (1 - 2 * sigmoid x))) (at (x::real))"
 proof -
-  have eq1: "(deriv ^^ 2) sigmoid = deriv (deriv sigmoid)"
+  have eq1: "(deriv ^^ 2) (sigmoid::real \<Rightarrow> real) = deriv (deriv sigmoid)"
     by (rule second_derivative_alt_def)
   have val_eq: "deriv (deriv sigmoid) x = sigmoid x * (1 - sigmoid x) * (1 - 2 * sigmoid x)"
     using eq1 sigmoid_second_derivative by metis

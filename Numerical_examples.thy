@@ -390,12 +390,12 @@ text \<open>
   theorems ask of \<open>\<sigma>\<close>.
 \<close>
 (* Auxiliary for Section 7: continuity of the logistic activation. *)
-lemma sigmoid_continuous_UNIV: "continuous_on UNIV sigmoid"
+lemma sigmoid_continuous_UNIV: "continuous_on UNIV (sigmoid::real \<Rightarrow> real)"
   using smooth_sigmoid[unfolded smooth_on_def, rule_format, of 0]
   by (simp add: C0_on_def)
 
 (* Auxiliary for Section 7: the logistic activation is Borel measurable. *)
-lemma sigmoid_measurable: "sigmoid \<in> borel_measurable borel"
+lemma sigmoid_measurable: "(sigmoid::real \<Rightarrow> real) \<in> borel_measurable borel"
   by (rule borel_measurable_continuous_onI[OF sigmoid_continuous_UNIV])
 
 (* Auxiliary for Example 7.1: the C^2 fact in the successor form the theorems match on. *)

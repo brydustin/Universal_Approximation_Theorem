@@ -6,23 +6,23 @@ begin
 section \<open>Definition and Analytical Properties\<close>
 
 (* Section 6: logistic function (unnumbered). *)
-definition sigmoid :: "real \<Rightarrow> real" where
+definition sigmoid :: "'a::{real_normed_field,banach} \<Rightarrow> 'a" where
   "sigmoid x = exp x / (1 + exp x)"
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_alt_def: "sigmoid x = inverse (1 + exp(-x))"
+lemma sigmoid_alt_def: "sigmoid (x::real) = inverse (1 + exp(-x))"
   unfolding sigmoid_def by (simp add: field_simps exp_minus)
 
 subsection \<open>Range, Monotonicity, and Symmetry\<close>
 
 text \<open>Bounds\<close>
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_pos: "sigmoid x > 0"
+lemma sigmoid_pos: "sigmoid (x::real) > 0"
   by (simp add: add_pos_pos sigmoid_def)
 
 text \<open>Prove that \(\sigma(x) < 1\) for all \(x\).\<close>
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_less_1: "sigmoid x < 1"
+lemma sigmoid_less_1: "sigmoid (x::real) < 1"
   by (simp add: add_strict_increasing sigmoid_def)
 
 text \<open>The sigmoid function \(\sigma(x)\) satisfies
@@ -32,7 +32,7 @@ text \<open>The sigmoid function \(\sigma(x)\) satisfies
   \]
 \<close>
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-corollary sigmoid_range: "0 < sigmoid x \<and> sigmoid x < 1"
+corollary sigmoid_range: "0 < sigmoid (x::real) \<and> sigmoid x < 1"
   by (simp only: sigmoid_less_1 sigmoid_pos)
 
 text \<open>
@@ -48,7 +48,7 @@ text \<open>
 
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_symmetry: "sigmoid (-x) = 1 - sigmoid x"
+lemma sigmoid_symmetry: "sigmoid (-x::real) = 1 - sigmoid x"
 proof -
   have "sigmoid (-x) = inverse (1 + exp x)"
     by (simp add: sigmoid_alt_def)
@@ -60,27 +60,35 @@ proof -
 qed
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-corollary "sigmoid(x) + sigmoid(-x) = 1"
+corollary "sigmoid(x::real) + sigmoid(-x) = 1"
   by (simp only: sigmoid_symmetry)
 
 text \<open>The sigmoid function is strictly increasing.\<close>
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_strictly_increasing: "x1 < x2 \<Longrightarrow> sigmoid x1 < sigmoid x2"
-  using real_shrink_lt sigmoid_def by force
+lemma sigmoid_strictly_increasing:
+  fixes x1 x2 :: real
+  assumes "x1 < x2"
+  shows "sigmoid x1 < sigmoid x2"
+proof -
+  have "exp x1 < exp x2" using assms by simp
+  then have "exp x1 / (1 + exp x1) < exp x2 / (1 + exp x2)"
+    using real_shrink_lt [of "exp x1" "exp x2"] by simp
+  thus ?thesis unfolding sigmoid_def .
+qed
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma sigmoid_at_zero: "sigmoid 0 = 1/2"
+lemma sigmoid_at_zero: "sigmoid (0::real) = 1/2"
   by (simp add: sigmoid_def)
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_left_dom_range:
-  assumes "x < 0"
+  assumes "(x::real) < 0"
   shows "sigmoid x < 1/2"
   using assms sigmoid_at_zero sigmoid_strictly_increasing by moura
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_right_dom_range:
-  assumes "x > 0"
+  assumes "(x::real) > 0"
   shows "sigmoid x > 1/2"
   using assms sigmoid_at_zero sigmoid_strictly_increasing by moura
 
@@ -106,9 +114,9 @@ lemma uminus_derive_minus_one: "(uminus has_derivative (*) (-1 :: real)) (at a w
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_differentiable: 
-  "(\<lambda>x. sigmoid x) differentiable_on UNIV"
+  "(\<lambda>x::real. sigmoid x) differentiable_on UNIV"
 proof -
-  have "\<forall>x. sigmoid differentiable (at x)"
+  have "\<forall>x::real. sigmoid differentiable (at x)"
   proof 
     fix x :: real
     have num_diff: "(\<lambda>x. exp x) differentiable (at x)"
@@ -126,14 +134,14 @@ qed
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_differentiable':
- "sigmoid field_differentiable at x"
+ "sigmoid field_differentiable at (x::real)"
   using DERIV_deriv_iff_field_differentiable DERIV_deriv_iff_real_differentiable 
         differentiable_on_def sigmoid_differentiable by blast
 
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma sigmoid_derivative:
-  shows "deriv sigmoid x = sigmoid x * (1 - sigmoid x)"
+  shows "deriv sigmoid (x::real) = sigmoid x * (1 - sigmoid x)"
   unfolding sigmoid_def
 proof -    
   (* The three side conditions of deriv_divide, named. *)
@@ -163,12 +171,12 @@ proof -
 qed
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
-lemma  sigmoid_derivative': "(sigmoid has_real_derivative (sigmoid x * (1 - sigmoid x))) (at x)"
+lemma  sigmoid_derivative': "(sigmoid has_real_derivative (sigmoid x * (1 - sigmoid x))) (at (x::real))"
   by (metis field_differentiable_derivI sigmoid_derivative sigmoid_differentiable')
 
 (* Supplementary logistic-function property for Section 6; no separate paper label. *)
 lemma deriv_one_minus_sigmoid:
-  "deriv (\<lambda>y. 1 - sigmoid y) x = sigmoid x * (sigmoid x - 1)"
+  "deriv (\<lambda>y::real. 1 - sigmoid y) x = sigmoid x * (sigmoid x - 1)"
   apply (subst deriv_diff)
     apply simp
   apply (simp only: sigmoid_differentiable')
@@ -209,7 +217,7 @@ definition softmax :: "real^'k \<Rightarrow> real^'k" where
 
 (* Section 6: hyperbolic-tangent example (unnumbered). *)
 lemma tanh_sigmoid_relationship:
-  "2 * sigmoid (2 * x) - 1 = tanh x"
+  "2 * sigmoid (2 * x::real) - 1 = tanh x"
 proof -
   have exp_nz: "exp x \<noteq> 0"
     by (rule exp_not_eq_zero)

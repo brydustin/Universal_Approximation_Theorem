@@ -18,7 +18,7 @@ text \<open>
 lemma sigmoid_is_bounded_function: "bounded_function sigmoid"
   unfolding bounded_function_def
 proof (intro bdd_aboveI)
-  fix y assume "y \<in> range (\<lambda>x. \<bar>sigmoid x\<bar>)"
+  fix y assume "y \<in> range (\<lambda>x::real. \<bar>sigmoid x\<bar>)"
   then obtain x where y_def: "y = \<bar>sigmoid x\<bar>"
     by blast
   show "y \<le> 1"

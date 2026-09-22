@@ -17,7 +17,7 @@ text \<open>
 \<close>
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
-lemma lim_sigmoid_infinity: "((\<lambda>x. sigmoid x) \<longlongrightarrow> 1) at_top"
+lemma lim_sigmoid_infinity: "((\<lambda>x::real. sigmoid x) \<longlongrightarrow> 1) at_top"
 proof(subst tendsto_at_top_epsilon_def, clarify)
   fix \<epsilon> :: real
   assume \<epsilon>_pos: "0 < \<epsilon>"
@@ -36,7 +36,7 @@ proof(subst tendsto_at_top_epsilon_def, clarify)
 qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
-lemma lim_sigmoid_minus_infinity: "(sigmoid \<longlongrightarrow> 0) at_bot"
+lemma lim_sigmoid_minus_infinity: "((sigmoid::real \<Rightarrow> real) \<longlongrightarrow> 0) at_bot"
 proof (subst tendsto_at_bot_epsilon_def, clarify)
   fix \<epsilon> :: real
   assume \<epsilon>_pos: "0 < \<epsilon>"
@@ -63,18 +63,18 @@ proof (subst tendsto_at_bot_epsilon_def, clarify)
 qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
-lemma sig_deriv_lim_at_top: "(deriv sigmoid \<longlongrightarrow> 0) at_top"
+lemma sig_deriv_lim_at_top: "(deriv (sigmoid::real \<Rightarrow> real) \<longlongrightarrow> 0) at_top"
   unfolding sigmoid_derivative[abs_def] sigmoid_def by real_asymp
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
-lemma sig_deriv_lim_at_bot: "(deriv sigmoid \<longlongrightarrow> 0) at_bot"
+lemma sig_deriv_lim_at_bot: "(deriv (sigmoid::real \<Rightarrow> real) \<longlongrightarrow> 0) at_bot"
   unfolding sigmoid_derivative[abs_def] sigmoid_def by real_asymp
 
 subsection \<open>Curvature and Inflection\<close>
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma second_derivative_sigmoid_positive_on:
-  assumes "x < 0"
+  assumes "(x::real) < 0"
   shows "(deriv ^^ 2) sigmoid x > 0"
 proof -
   have "1 - 2 * sigmoid x > 0"
@@ -85,35 +85,35 @@ qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma second_derivative_sigmoid_negative_on:
-  assumes "x > 0"
+  assumes "(x::real) > 0"
   shows "(deriv ^^ 2) sigmoid x < 0"
 proof -
   have "1 - 2 * sigmoid x < 0"
-    by (smt (verit) assms sigmoid_strictly_increasing sigmoid_symmetry)
+    using sigmoid_right_dom_range [OF assms] by simp
   then show "(deriv ^^ 2) sigmoid x < 0"
     by (simp add: mult_pos_neg sigmoid_range sigmoid_second_derivative)
 qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sigmoid_inflection_point:
-  "(deriv ^^ 2) sigmoid 0 = 0"
+  "(deriv ^^ 2) (sigmoid::real \<Rightarrow> real) 0 = 0"
   by (simp add: sigmoid_alt_def sigmoid_second_derivative)
 
 subsection \<open>Monotonicity and Bounds of the First Derivative\<close>
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sigmoid_positive_derivative:
-"deriv sigmoid x > 0"
+"deriv sigmoid (x::real) > 0"
   by (simp add: sigmoid_derivative sigmoid_range)
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sigmoid_deriv_0:
-  "deriv sigmoid 0 = 1/4"
+  "deriv (sigmoid::real \<Rightarrow> real) 0 = 1/4"
   by (simp add: sigmoid_derivative sigmoid_at_zero)
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma deriv_sigmoid_increase_on_negatives:
-  assumes "x2 < 0"
+  assumes "(x2::real) < 0"
   assumes "x1 < x2" 
   shows "deriv sigmoid x1 < deriv sigmoid x2"
   by(rule DERIV_pos_imp_increasing, simp add: assms(2), metis assms(1) deriv_sigmoid_has_deriv 
@@ -121,7 +121,7 @@ lemma deriv_sigmoid_increase_on_negatives:
   
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma deriv_sigmoid_decreases_on_positives:
-  assumes "0 < x1"
+  assumes "(0::real) < x1"
   assumes "x1 < x2" 
   shows "deriv sigmoid x2 < deriv sigmoid x1"
   by(rule DERIV_neg_imp_decreasing, simp add: assms(2), metis assms(1) deriv_sigmoid_has_deriv 
@@ -129,7 +129,7 @@ lemma deriv_sigmoid_decreases_on_positives:
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 lemma sigmoid_derivative_upper_bound:
-  assumes "x\<noteq> 0"
+  assumes "(x::real) \<noteq> 0"
   shows "deriv sigmoid x < 1/4"
 proof(cases "x \<le> 0")
   assume "x\<le>0"
@@ -161,7 +161,7 @@ qed
 
 (* Auxiliary logistic-function property for Section 6; not separately numbered. *)
 corollary sigmoid_derivative_range:
-  "0 < deriv sigmoid x \<and> deriv sigmoid x \<le> 1/4"
+  "0 < deriv sigmoid (x::real) \<and> deriv sigmoid x \<le> 1/4"
   by (smt (verit, best) sigmoid_deriv_0 sigmoid_derivative_upper_bound sigmoid_positive_derivative)
 
 subsection \<open>Sigmoidal and Heaviside Step Functions\<close>

@@ -1,5 +1,6 @@
 theory Sigmoid_Universal_Approximation
   imports Sigmoid_Definition
+          Sigmoid_Analytic
           Lp_Inequalities
           Derivative_Identities_Smoothness
           Asymptotic_Qualitative_Properties

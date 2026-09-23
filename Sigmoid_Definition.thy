@@ -5,6 +5,17 @@ begin
 
 section \<open>Definition and Analytical Properties\<close>
 
+text \<open>
+  The logistic function is defined at an arbitrary real normed field that is also a Banach
+  space, rather than at the reals alone, so that the holomorphic extension needed for real
+  analyticity (theory Sigmoid\_Analytic) is \<^emph>\<open>this same constant\<close> read at type
+  complex, rather than a second definition.  Both real and complex inhabit that class.
+
+  Everything below is stated for real arguments, and that restriction is necessary rather
+  than bookkeeping: the identities of this section run through \<open>1 + exp x \<noteq> 0\<close>,
+  which is exactly what fails over the complex numbers at the odd multiples of i*pi -- the
+  very poles that fix the radius of analyticity at pi.
+\<close>
 (* Section 6: logistic function (unnumbered). *)
 definition sigmoid :: "'a::{real_normed_field,banach} \<Rightarrow> 'a" where
   "sigmoid x = exp x / (1 + exp x)"
@@ -211,6 +222,124 @@ lemma sigmoid_logit_comp:
 lemma logit_sigmoid_comp:
   "logit (sigmoid p ) = p"
   by (smt (verit, best) sigmoid_less_1 sigmoid_logit_comp sigmoid_pos sigmoid_strictly_increasing)
+
+subsection \<open>The Logistic Function as an Embedding of the Line into the Unit Interval\<close>
+
+text \<open>
+  The two composition laws above already say that the logistic function and the logit are
+  mutually inverse, but they say it one point at a time.  This subsection packages that
+  into the three statements a reader is likely to want, namely that
+  \[
+    \sigma \colon \mathbb{R} \longrightarrow (0,1)
+  \]
+  is a bijection, an order isomorphism, a homeomorphism, and an isomorphism of measurable
+  spaces.  Isabelle has no bundled types of order isomorphisms, homeomorphisms or
+  measurable equivalences, so each is recorded in the idiom the library actually uses:
+  \<open>bij_betw\<close>, a pair of strict-monotonicity facts, \<open>homeomorphism\<close>, and a pair of
+  measurability facts against the restricted measurable space on the open unit interval.
+  Nothing in Sections 3 to 7 needs any of this -- the approximation theorems ask only that
+  the activation be sigmoidal, bounded and Borel measurable -- so these results are here to
+  make the inverse explicit, not because a later proof consumes them.
+\<close>
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_inj: "inj (sigmoid :: real \<Rightarrow> real)"
+  by (rule inj_on_inverseI [where g = logit]) (rule logit_sigmoid_comp)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_bij_betw: "bij_betw (sigmoid :: real \<Rightarrow> real) UNIV {0<..<1}"
+  by (rule bij_betw_byWitness [where f' = logit])
+     (auto simp: logit_sigmoid_comp sigmoid_logit_comp sigmoid_pos sigmoid_less_1)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma logit_bij_betw: "bij_betw logit {0<..<1} UNIV"
+  by (rule bij_betw_byWitness [where f' = sigmoid])
+     (auto simp: logit_sigmoid_comp sigmoid_logit_comp sigmoid_pos sigmoid_less_1)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_range_eq: "range (sigmoid :: real \<Rightarrow> real) = {0<..<1}"
+  using sigmoid_bij_betw by (simp add: bij_betw_def)
+
+text \<open>Order isomorphism: both directions are strictly increasing.\<close>
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma strict_mono_sigmoid: "strict_mono (sigmoid :: real \<Rightarrow> real)"
+  by (rule strict_monoI) (rule sigmoid_strictly_increasing)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_less_iff: "sigmoid (x::real) < sigmoid y \<longleftrightarrow> x < y"
+  by (simp add: strict_mono_less strict_mono_sigmoid)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_le_iff: "sigmoid (x::real) \<le> sigmoid y \<longleftrightarrow> x \<le> y"
+  by (simp add: strict_mono_less_eq strict_mono_sigmoid)
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma logit_strict_mono_on: "strict_mono_on {0<..<1} logit"
+proof (rule strict_mono_onI)
+  fix p q :: real
+  assume "p \<in> {0<..<1}" "q \<in> {0<..<1}" "p < q"
+  hence "sigmoid (logit p) < sigmoid (logit q)"
+    by (simp add: sigmoid_logit_comp)
+  thus "logit p < logit q" by (simp add: sigmoid_less_iff)
+qed
+
+text \<open>
+  Topological isomorphism.  Continuity of the logit is the one ingredient that does not
+  follow from the composition laws: it is proved on the open interval, where the quotient
+  \(p/(1-p)\) is positive and the logarithm is therefore continuous.  Outside that interval
+  the logit is a constant (the value of \<open>undefined\<close>), which is what makes the
+  measurability statement below hold on the whole line.
+\<close>
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_continuous_on: "continuous_on S (sigmoid :: real \<Rightarrow> real)"
+proof -
+  have nz: "1 + exp (x::real) \<noteq> 0" for x
+    using add_pos_pos [OF zero_less_one exp_gt_zero [of x]] by simp
+  show ?thesis
+    unfolding sigmoid_def by (intro continuous_intros) (simp add: nz)
+qed
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma logit_continuous_on: "continuous_on {0<..<1} logit"
+proof -
+  have "continuous_on {0<..<1} (\<lambda>p::real. ln (p / (1 - p)))"
+    by (intro continuous_intros) auto
+  moreover have "\<And>p::real. p \<in> {0<..<1} \<Longrightarrow> ln (p / (1 - p)) = logit p"
+    by (simp add: logit_def)
+  ultimately show ?thesis by (rule continuous_on_eq)
+qed
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+theorem sigmoid_homeomorphism: "homeomorphism UNIV {0<..<1} sigmoid logit"
+  unfolding homeomorphism_def
+  using sigmoid_continuous_on logit_continuous_on sigmoid_bij_betw logit_bij_betw
+  by (auto simp: logit_sigmoid_comp sigmoid_logit_comp bij_betw_def)
+
+text \<open>Isomorphism of measurable spaces, with the unit interval carrying the subspace
+  \(\sigma\)-algebra.\<close>
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma sigmoid_borel_measurable: "(sigmoid :: real \<Rightarrow> real) \<in> borel_measurable borel"
+  by (rule borel_measurable_continuous_onI [OF sigmoid_continuous_on])
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+lemma logit_borel_measurable: "logit \<in> borel_measurable borel"
+  unfolding logit_def by measurable
+
+(* Supplementary logistic-function property for Section 6; no separate paper label. *)
+theorem sigmoid_borel_iso:
+  "(sigmoid :: real \<Rightarrow> real) \<in> borel \<rightarrow>\<^sub>M restrict_space borel {0<..<1}"
+  "logit \<in> restrict_space borel {0<..<1} \<rightarrow>\<^sub>M borel"
+proof -
+  show "(sigmoid :: real \<Rightarrow> real) \<in> borel \<rightarrow>\<^sub>M restrict_space borel {0<..<1}"
+    by (rule measurable_restrict_space2)
+       (use sigmoid_borel_measurable sigmoid_pos sigmoid_less_1 in auto)
+  show "logit \<in> restrict_space borel {0<..<1} \<rightarrow>\<^sub>M borel"
+    by (rule measurable_restrict_space1 [OF logit_borel_measurable])
+qed
+
 
 definition softmax :: "real^'k \<Rightarrow> real^'k" where 
 "softmax z = (\<chi> i. exp (z $ i) / (\<Sum> j\<in>UNIV. exp (z $ j)))"  

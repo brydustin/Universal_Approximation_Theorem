@@ -73,7 +73,12 @@ theorem sigmoid_real_analytic: "real_analytic_on (sigmoid::real \<Rightarrow> re
 corollary sigmoid_Cinfinity: "Cinfinity_on (sigmoid::real \<Rightarrow> real) UNIV"
   by (rule real_analytic_imp_Cinfinity [OF sigmoid_real_analytic])
 
-corollary "Ck_on k (sigmoid::real \<Rightarrow> real) UNIV"
+(* Analyticity also returns the C^k predicate the rest of the development is stated with. *)
+corollary sigmoid_C_k_on: "C_k_on k (sigmoid::real \<Rightarrow> real) UNIV"
+proof -
+  have "Ck_on k (sigmoid::real \<Rightarrow> real) UNIV"
     using sigmoid_Cinfinity by (rule Cinfinity_on_imp_Ck_on)
+  thus ?thesis by (simp add: Ck_on_real_iff)
+qed
 
 end

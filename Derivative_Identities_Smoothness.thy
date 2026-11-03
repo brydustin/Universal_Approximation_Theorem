@@ -236,14 +236,11 @@ proof -
 qed
 
 text \<open>
-  Theory Real\_and\_Complex\_Analytic.Higher\_Differentiability declares no
-  \<open>smooth_on\<close>, so we keep our own small definition here, directly in terms of the
-  imported \<open>C_k_on\<close>.  Two nearby names are worth knowing about: the parent session
-  now carries an identical definition in Limits\_Higher\_Order\_Derivatives, and
+  \<^theory>\<open>HOL-Analysis.Higher_Order_Derivatives\<close> declares no \<open>smooth_on\<close>, so we
+  keep our own small definition here, directly in terms of the library's \<open>C_k_on\<close>.
   Smooth\_Manifolds supplies an unrelated Smooth.smooth\_on whose arguments come in the
-  opposite order.  A theory importing Complex\_Analytic alongside this one must therefore
-  qualify the name; the symptom of not doing so is a type-unification error rather than an
-  ambiguity warning.
+  opposite order, and its fact \<open>smooth_on_def\<close> shadows ours in any theory that also
+  imports \<^file>\<open>Mollifiers.thy\<close>; such theories must qualify the name.
 \<close>
 definition smooth_on :: "(real \<Rightarrow> real) \<Rightarrow> real set \<Rightarrow> bool" where
   "smooth_on f U \<equiv> \<forall>k. C_k_on k f U"

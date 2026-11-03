@@ -23,8 +23,8 @@ text \<open>
 \<close>
 
 text \<open>
-  The general derivative-chain fact that \<open>C1_cont_diff\<close> and \<open>C2_cont_diff\<close> (theory
-  Real\_and\_Complex\_Analytic.Limits\_Higher\_Order\_Derivatives) each specialize for \<open>k=1,2\<close>:
+  The general derivative-chain fact that \<open>C1_cont_diff\<close> (theory
+  \<^theory>\<open>HOL-Analysis.Higher_Order_Derivatives\<close>) and \<open>C2_cont_diff\<close> below specialize for \<open>k=1,2\<close>:
   on \<open>C_k_on k f U\<close>, every derivative below order \<open>k\<close> is genuinely a derivative of the one
   before it, at every point of \<open>U\<close>.  This is exactly the hypothesis form used by the library's
   Lagrange-remainder theorem \<open>Taylor\<close> (theory \<open>HOL.MacLaurin\<close>).
@@ -47,6 +47,40 @@ proof -
   then show ?thesis
     by simp
 qed
+
+(* Auxiliary; not in the source. The k = 2 case of the chain above. *)
+lemma C2_cont_diff:
+  fixes f :: "real \<Rightarrow> real" and U :: "real set"
+  assumes ck: "C_k_on 2 f U"
+  shows "f differentiable_on U \<and> continuous_on U (deriv f) \<and>
+         (\<forall>y \<in> U. (f has_real_derivative (deriv f) y) (at y)) \<and>
+         deriv f differentiable_on U \<and> continuous_on U (deriv (deriv f)) \<and>
+         (\<forall>y \<in> U. (deriv f has_real_derivative (deriv (deriv f)) y) (at y))"
+proof -
+  have D: "\<And>n. n < 2 \<Longrightarrow> ((deriv ^^ n) f) differentiable_on U \<and> continuous_on U ((deriv ^^ Suc n) f)"
+    using ck unfolding C_k_on_def by simp
+  have D0: "f differentiable_on U \<and> continuous_on U (deriv f)"
+    using D[of 0] by simp
+  have D1: "deriv f differentiable_on U \<and> continuous_on U (deriv (deriv f))"
+    using D[of 1] by simp
+  have H0: "\<forall>y \<in> U. (f has_real_derivative (deriv f) y) (at y)"
+    using Ck_on_derivative_chain[OF ck, of 0] by simp
+  have H1: "\<forall>y \<in> U. (deriv f has_real_derivative (deriv (deriv f)) y) (at y)"
+    using Ck_on_derivative_chain[OF ck, of 1] by simp
+  show ?thesis
+    using D0 D1 H0 H1 by blast
+qed
+
+(* Auxiliary; not in the source. *)
+lemma C2_on_open_U_def2:
+  fixes f :: "real \<Rightarrow> real"
+  assumes openU: "open U"
+      and diff_f: "f differentiable_on U"
+      and diff_df: "deriv f differentiable_on U"
+      and cont_d2f: "continuous_on U (deriv (deriv f))"
+  shows "C_k_on 2 f U"
+  by (simp add: C_k_on_def cont_d2f diff_df diff_f differentiable_imp_continuous_on
+      less_2_cases_iff openU)
 
 text \<open>
   A standalone name for a fact used repeatedly (so far always inline) when adapting Theorem

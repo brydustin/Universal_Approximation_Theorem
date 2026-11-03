@@ -391,7 +391,7 @@ text \<open>
 \<close>
 (* Auxiliary for Section 7: continuity of the logistic activation. *)
 lemma sigmoid_continuous_UNIV: "continuous_on UNIV (sigmoid::real \<Rightarrow> real)"
-  using smooth_sigmoid[unfolded smooth_on_def, rule_format, of 0]
+  using smooth_sigmoid[unfolded Derivative_Identities_Smoothness.smooth_on_def, rule_format, of 0]
   by (simp add: C0_on_def)
 
 (* Auxiliary for Section 7: the logistic activation is Borel measurable. *)

@@ -19,8 +19,8 @@ text \<open>
   \<open>Functional_Spaces\<close> theory instantiates \<open>scaleR\<close> for function types in a way that
   Isabelle's class system cannot merge with \<open>Smooth_Manifolds\<close>'s own \<open>scaleR\<close> instantiation
   for function types (a hard "clash of specifications", not a design choice) -- and this
-  project now needs \<open>Smooth_Manifolds\<close> transitively, via \<open>Real_and_Complex_Analytic\<close>'s
-  higher-differentiability development used throughout \<^file>\<open>Sigmoid_Definition.thy\<close> onward.
+  project needs \<open>Smooth_Manifolds\<close> for the bump function that seeds the mollifier
+  (\<^file>\<open>Mollifiers.thy\<close>).
   Since \<open>Lp_norm\<close> only ever needs the elementary Bochner-integral formula below (see
   \<open>Lp_norm_continuous_eq\<close>), not Minkowski/H\"older/completeness, this costs us nothing here.
 \<close>

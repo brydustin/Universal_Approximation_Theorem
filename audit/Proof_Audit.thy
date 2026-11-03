@@ -5,14 +5,14 @@ begin
 (* Build safeguard: audit stored proofs, not a numbered result in the paper. *)
 ML \<open>
   val audit_thy = @{theory};
-  val audit_base = Thy_Info.get_theory "Real_and_Complex_Analytic.Higher_Differentiability";
+  val audit_base = Build.get_theory "HOL-Analysis.Higher_Order_Derivatives";
   val audit_facts = Global_Theory.dest_thms true [audit_base] audit_thy
     |> map (apsnd (Thm.transfer audit_thy));
   (* The directory scanned is the ENTRY's, not this theory's. Proof_Audit.thy lives in
      its own session directory, because Isabelle forbids two sessions sharing one; if
      this scanned its own directory it would find only itself and the check that every
      local theory file lies in the import closure would be vacuous. *)
-  val audit_root = Thy_Info.get_theory
+  val audit_root = Build.get_theory
     "Sigmoid_Universal_Approximation.Sigmoid_Universal_Approximation";
   val audit_dir = Resources.master_directory audit_root;
   fun audit_directory thy = Path.implode (Path.expand (Resources.master_directory thy));

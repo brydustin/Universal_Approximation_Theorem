@@ -1,7 +1,7 @@
 section \<open>Real analyticity of the logistic function\<close>
 
 theory Sigmoid_Analytic
-  imports Sigmoid_Definition "Real_and_Complex_Analytic.Complex_Analytic"
+  imports Sigmoid_Definition "HOL-Complex_Analysis.Complex_Analytic"
 begin
 
 text \<open>

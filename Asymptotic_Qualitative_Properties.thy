@@ -4,6 +4,46 @@ theory Asymptotic_Qualitative_Properties
   imports Derivative_Identities_Smoothness "HOL-Real_Asymp.Real_Asymp"
 begin
 
+subsection \<open>The \<open>\<epsilon>\<close>--\<open>N\<close> form of limits at infinity\<close>
+
+(* Auxiliary; not in the source. Moved here from the former parent session. *)
+lemma eventually_at_top_semilattice:
+  fixes P :: "'a::semilattice_sup \<Rightarrow> bool"
+  shows "eventually P at_top \<longleftrightarrow> (\<exists>N. \<forall>x \<ge> N. P x)"
+  unfolding at_top_def
+  by (subst eventually_INF_base)
+     (auto simp: eventually_principal intro: sup.cobounded1 sup.cobounded2)
+
+(* Auxiliary; not in the source. *)
+lemma eventually_at_bot_semilattice:
+  fixes P :: "'a::semilattice_inf \<Rightarrow> bool"
+  shows "eventually P at_bot \<longleftrightarrow> (\<exists>N. \<forall>x \<le> N. P x)"
+  unfolding at_bot_def
+  by (subst eventually_INF_base)
+     (auto simp: eventually_principal intro: inf.cobounded1 inf.cobounded2)
+
+(* Auxiliary; not in the source. *)
+lemma tendsto_at_top_eq:
+  fixes f :: "'a::semilattice_sup \<Rightarrow> 'b :: metric_space"
+  shows "(f \<longlongrightarrow> L) at_top \<longleftrightarrow> (\<forall>e>0. \<exists>N. \<forall>n\<ge>N. dist (f n) L < e)"
+  by (simp add: tendsto_iff eventually_at_top_semilattice)
+
+(* Auxiliary; not in the source. *)
+corollary tendsto_at_top_epsilon_def:
+  "(f \<longlongrightarrow> L) at_top = (\<forall> \<epsilon> > 0. \<exists>N. \<forall>x \<ge> N. \<bar>(f (x::real)::real) - L\<bar> < \<epsilon>)"
+  by (simp add: tendsto_at_top_eq dist_norm)
+
+(* Auxiliary; not in the source. *)
+lemma tendsto_at_bot_eq:
+  fixes f :: "'a::semilattice_inf \<Rightarrow> 'b :: metric_space"
+  shows "(f \<longlongrightarrow> L) at_bot \<longleftrightarrow> (\<forall>e>0. \<exists>N. \<forall>n\<le>N. dist (f n) L < e)"
+  by (simp add: tendsto_iff eventually_at_bot_semilattice)
+
+(* Auxiliary; not in the source. *)
+corollary tendsto_at_bot_epsilon_def:
+  "(f \<longlongrightarrow> L) at_bot = (\<forall> \<epsilon> > 0. \<exists>N. \<forall>x \<le> N. \<bar>(f (x::real)::real) - L\<bar> < \<epsilon>)"
+  by (simp add: tendsto_at_bot_eq dist_norm)
+
 subsection \<open>Limits at Infinity of Sigmoid and its Derivative\<close>
 
 text \<open>

@@ -1,6 +1,6 @@
 theory Sigmoid_Definition
   imports "HOL-Analysis.Analysis" "HOL-Combinatorics.Stirling"
-          Real_and_Complex_Analytic.Higher_Differentiability
+          "HOL-Analysis.Higher_Order_Derivatives"
 begin
 
 section \<open>Definition and Analytical Properties\<close>

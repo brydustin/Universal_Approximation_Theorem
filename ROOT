@@ -10,15 +10,13 @@ chapter AFP
    Every theory must be included in at least one of the sessions.
 *)
 
-(* Session name, list base session: Real_and_Complex_Analytic provides the canonical
-   Ck_on / k_times_Fr_differentiable_at higher-differentiability development (real and
-   multi-dimensional), used in place of this project's own former Nth_derivative / C_k_on.
-   (The AFP entry "Lp" was tried for Section 3's L^p norm but its Functional_Spaces theory's
-   scaleR instantiation for function types is irreconcilably incompatible with the scaleR
-   instantiation Real_and_Complex_Analytic needs from Smooth_Manifolds -- a hard Isabelle
-   class-specification clash, not a design choice -- so Lp_Approximation.thy instead defines
-   Lp_norm directly via the Bochner integral, with no AFP Lp dependency.) *)
-session "Sigmoid_Universal_Approximation" = "Real_and_Complex_Analytic" +
+(* Base session HOL-Complex_Analysis: since Isabelle2026, HOL-Analysis provides the
+   higher-differentiability development (C_k_on, Ck_on, real_analytic_on) and
+   HOL-Complex_Analysis the complexification criterion used for analyticity.
+   Smooth_Manifolds supplies the bump function that seeds the mollifier. The AFP entry
+   "Lp" is not used: its scaleR instantiation for function types clashes with
+   Smooth_Manifolds', so Lp_Inequalities.thy works from the Bochner integral. *)
+session "Sigmoid_Universal_Approximation" = "HOL-Complex_Analysis" +
 
 (* Timeout (in sec) in case of non-termination problems *)
   options [timeout = 600, document = pdf, document_output = "output", quick_and_dirty = false]
@@ -26,6 +24,8 @@ session "Sigmoid_Universal_Approximation" = "Real_and_Complex_Analytic" +
 (* real_asymp, used for the sigmoid derivative limits. *)
   sessions
     "HOL-Real_Asymp"
+    "HOL-Combinatorics"
+    Smooth_Manifolds
 
 
 (* To suppress document generation of some theories: *)
